@@ -1,15 +1,15 @@
 use std::mem::swap;
 
-const FILE_PATH:&str = "day1.txt";
+const FILE_PATH:&str = "../data/day01.txt";
 
 fn main()
 {
     let now = std::time::Instant::now();
-    day1();
+    day01();
     println!("Day1 duration: {}us", now.elapsed().as_micros());
 }
 
-fn day1()
+fn day01()
 {
     const NUMBER_AMOUNT:usize = 3;
     let mut max_amounts: [i32; NUMBER_AMOUNT] = [0; NUMBER_AMOUNT];

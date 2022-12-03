@@ -22,21 +22,17 @@ fn calculate_str_value(line: &[u8]) -> u64
     let mut value: u64 = 0;
     for n in 0..line.len()
     {
-        // bitwise or for the priority score
-        value |= 1u64 << get_priority_score(line[n]);
+        // bitwise or for the letter value
+        // Make 'A' value 0, and 'a' 32
+        value |= 1u64 << (line[n] - 'A' as u8);
     }
-    return value;
-}
 
-fn get_priority_score(priority: u8) -> u8
-{
-    let value = (priority - 'A' as u8) as u8 + 1u8;
-    let value_bit = value & 32u8;          // Get the bit from lower case letters ('a' = 33, 'A' = 1).
-    let value_bit = value_bit >> 5u8;      // Bit shift it to smallest value.
-    let value_bit = value_bit ^ 1u8;       // Swap the bit.
-    let value = value & 31u8;              // Get the lower 5 bits ('A' = 1, 'a' = 1, was 33).
-    let value = value + value_bit * 26u8;  // Multiply the bit by 26 and add it to value
-    return value;
+    // mask lower 32 bits and shift 27 bits up.
+    let upper_case = (value & ((1u64 << 32u64) - 1u64)) << 27;
+    // take higher 32 bits and shift down by 31
+    let lower_case = value >> 31;
+
+    return upper_case | lower_case;
 }
 
 fn day03_1(print_outcome: bool, content: &str)
@@ -82,7 +78,6 @@ fn day03_2(print_outcome: bool, content: &str)
         let l2 = get_str(lines.next());
         let value = value & calculate_str_value(l2.as_bytes());
 
-//        total_score = total_score.wrapping_add(value as u32);
         total_score += value.trailing_zeros();
     }
     if print_outcome

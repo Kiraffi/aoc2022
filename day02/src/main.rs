@@ -12,7 +12,7 @@ fn main()
         day02_1(true, &_data);
         day02_2(true, &_data);
     }
-    println!("Day1 duration: {}us", now.elapsed().as_micros() as f32 / RUN_AMOUNT as f32);
+    println!("Day02 duration: {}us", now.elapsed().as_micros() as f32 / RUN_AMOUNT as f32);
 }
 
 fn day02_1(print_outcome: bool, content: &str)
@@ -52,7 +52,7 @@ fn day02_1(print_outcome: bool, content: &str)
 
     if print_outcome
     {
-        println!("Day 2-1: Points: {}", total_score);
+        println!("Day 02-1: Points: {}", total_score);
     }
 }
 
@@ -84,6 +84,6 @@ fn day02_2(print_outcome: bool, content: &str)
 
     if print_outcome
     {
-        println!("Day 2-2: Points: {}", total_score);
+        println!("Day 02-2: Points: {}", total_score);
     }
 }

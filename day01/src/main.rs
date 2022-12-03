@@ -7,9 +7,9 @@ fn main()
     let now = std::time::Instant::now();
     for _ in 0..RUN_AMOUNT
     {
-        day01(false, &data);
+        day01(true, &data);
     }
-    println!("Day1 duration: {}us", now.elapsed().as_micros() as f32 / RUN_AMOUNT as f32);
+    println!("Day01 duration: {}us", now.elapsed().as_micros() as f32 / RUN_AMOUNT as f32);
 }
 
 fn day01(print_outcome: bool, content: &str)
@@ -46,7 +46,7 @@ fn day01(print_outcome: bool, content: &str)
 
     if print_outcome
     {
-        println!("Day 1-1: Highest: {}", max_amounts[0]);
-        println!("Day 1-2: Sum of highest {} values: {}", NUMBER_AMOUNT, sum_of_maxes);
+        println!("Day 01-1: Highest: {}", max_amounts[0]);
+        println!("Day 01-2: Sum of highest {} values: {}", NUMBER_AMOUNT, sum_of_maxes);
     }
 }

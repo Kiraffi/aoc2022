@@ -68,13 +68,16 @@ fn get_str(option: Option<&str>) -> &str
 fn day03_2(print_outcome: bool, content: &str)
 {
     let mut total_score: u32 = 0;
-    let mut lines = content.lines().peekable();
-
-    while lines.peek() != None
+    let mut lines = content.lines(); //.peekable();
+    // while lines.peek() != None
+    while let Some(l0) = lines.next()
     {
-        let line0 = get_str(lines.next()).as_bytes();
-        let line1 = get_str(lines.next()).as_bytes();
-        let line2 = get_str(lines.next()).as_bytes();
+        let l1 = get_str(lines.next());
+        let l2 = get_str(lines.next());
+
+        let line0 = l0.as_bytes();
+        let line1 = l1.as_bytes();
+        let line2 = l2.as_bytes();
 
         for priority0 in line0
         {

@@ -17,22 +17,26 @@ fn main()
     println!("Day03 duration: {}us", now.elapsed().as_micros() as f32 / RUN_AMOUNT as f32);
 }
 
-fn calculate_str_value(line: &[u8]) -> u64
+fn evaluate_str_value_to_priority(value: u64) -> u32
 {
-    let mut value: u64 = 0;
-    for n in 0..line.len()
-    {
-        // bitwise or for the letter value
-        // Make 'A' value 0, and 'a' 32
-        value |= 1u64 << (line[n] - 'A' as u8);
-    }
-
     // mask lower 32 bits and shift 27 bits up.
     let upper_case = (value & ((1u64 << 32u64) - 1u64)) << 27;
     // take higher 32 bits and shift down by 31
     let lower_case = value >> 31;
 
-    return upper_case | lower_case;
+    return (upper_case | lower_case).trailing_zeros();
+}
+
+fn calculate_str_value(line: &[u8]) -> u64
+{
+    let mut value: u64 = 0;
+    for n in 0..line.len()
+    {
+        // Bitwise OR for the letter value
+        // 'A' bit 0, and 'a' bit 32
+        value |= 1u64 << (line[n] - 'A' as u8);
+    }
+    return value;
 }
 
 fn day03_1(print_outcome: bool, content: &str)
@@ -46,7 +50,7 @@ fn day03_1(print_outcome: bool, content: &str)
         let right_chars = &line_bytes[half..];
 
         let value: u64 = calculate_str_value(left_chars) & calculate_str_value(right_chars);
-        total_score += value.trailing_zeros();
+        total_score += evaluate_str_value_to_priority(value);
     }
     if print_outcome
     {
@@ -78,7 +82,7 @@ fn day03_2(print_outcome: bool, content: &str)
         let l2 = get_str(lines.next());
         let value = value & calculate_str_value(l2.as_bytes());
 
-        total_score += value.trailing_zeros();
+        total_score += evaluate_str_value_to_priority(value);
     }
     if print_outcome
     {

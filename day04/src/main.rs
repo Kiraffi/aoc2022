@@ -59,16 +59,14 @@ fn get_result<F>(content: &str, func: F) -> u32
     where F: Fn(Vec<u128>) -> u32
 {
     content.lines()
-        .map(|line|
+        .fold(0u32, |prev, line|
         {
-            let res: Vec<u128> = line
+            func(line
                 .split(",")
                 .map(|str_pair| { get_rooms(str_pair) })
-                .collect();
-
-            return func(res);
+                .collect()
+            ) + prev
         })
-        .fold(0, |prev_value, new_value| { prev_value + new_value })
 }
 
 fn day04_1(print_outcome: bool, content: &str)

@@ -1,4 +1,3 @@
-
 const RUN_AMOUNT:u32 = 1;
 
 fn main()
@@ -16,7 +15,7 @@ fn main()
     */
     day04_1(true, &_data);
     day04_2(true, &_data);
-    println!("Day03 duration: {}us", now.elapsed().as_micros() as f32 / RUN_AMOUNT as f32);
+    println!("Day04 duration: {}us", now.elapsed().as_micros() as f32 / RUN_AMOUNT as f32);
 }
 fn get_rooms(line: &str) -> u128
 {
@@ -33,30 +32,48 @@ fn get_rooms(line: &str) -> u128
     return result;
 }
 
-fn get_rooms_values(line: &str) -> (u128, u128)
+fn get_fully_overlapping(vals: Vec<u128>) -> u32
 {
-    let mut pairs = line.split(",");
-    let first_pair = pairs.next().unwrap();
-    let second_pair = pairs.next().unwrap();
-    let first_rooms = get_rooms(first_pair);
-    let second_rooms = get_rooms(second_pair);
-    return (first_rooms, second_rooms);
+    let combined = vals[0] & vals[1];
+    if (vals[0] & combined) == vals[0]
+    {
+        return 1u32;
+    }
+    if (vals[1] & combined) == vals[1]
+    {
+        return 1u32;
+    }
+    return 0u32;
+}
+
+fn get_partial_overlapping(vals: Vec<u128>) -> u32
+{
+    if (vals[0] & vals[1]) != 0
+    {
+        return 1u32
+    }
+    return 0u32;
+}
+
+fn get_result<F>(content: &str, func: F) -> u32
+    where F: Fn(Vec<u128>) -> u32
+{
+    content.lines()
+        .map(|line|
+        {
+            let res: Vec<u128> = line
+                .split(",")
+                .map(|str_pair| { get_rooms(str_pair) })
+                .collect();
+
+            return func(res);
+        })
+        .fold(0, |prev_value, new_value| { prev_value + new_value })
 }
 
 fn day04_1(print_outcome: bool, content: &str)
 {
-    let mut total_score: u32 = 0;
-    for line in content.lines()
-    {
-        let (first, second) = get_rooms_values(line);
-        let combined_room = first & second;
-        if ((first & combined_room) == first)
-            || ((second & combined_room) == second)
-
-        {
-            total_score += 1;
-        }
-    }
+    let total_score: u32 = get_result(content, get_fully_overlapping);
     if print_outcome
     {
         println!("Day 04-1: Fully overlapping room assignments: {}", total_score);
@@ -65,17 +82,7 @@ fn day04_1(print_outcome: bool, content: &str)
 
 fn day04_2(print_outcome: bool, content: &str)
 {
-    let mut total_score: u32 = 0;
-    for line in content.lines()
-    {
-        let (first, second) = get_rooms_values(line);
-        let combined_room = first & second;
-        if combined_room != 0
-
-        {
-            total_score += 1;
-        }
-    }
+    let total_score: u32 = get_result(content, get_partial_overlapping);
     if print_outcome
     {
         println!("Day 04-2: Any overlapping room assignments: {}", total_score);

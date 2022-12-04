@@ -19,14 +19,16 @@ fn main()
 }
 fn get_rooms(line: &str) -> u128
 {
-    let mut rooms = line.split("-");
-    let first = rooms.next().unwrap().parse::<i32>().unwrap();
-    let second = rooms.next().unwrap().parse::<i32>().unwrap();
+    let values: Vec<i32> = line
+        .split("-")
+        .map(|x| x.parse::<i32>().unwrap())
+        .collect();
+
     // Set bits up to second value.
-    let result = (1u128 << second) - 1;
+    let result = (1u128 << values[1]) - 1;
     // Get first value bits and invert the bits. The first value needs to be reduced by 1,
     // so for example 1 becomes 0th bit, then -1 will make it 0. Inverting 0 is ~0, all bits set.
-    let first_invert_bits = !((1u128 << (first - 1)) - 1);
+    let first_invert_bits = !((1u128 << (values[0] - 1)) - 1);
     // And them together to get the range from first to second bits
     let result = result & first_invert_bits;
     return result;

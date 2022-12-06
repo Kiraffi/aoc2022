@@ -22,21 +22,41 @@ fn main()
 fn find_amount_unique(line: &str, amount: usize) -> usize
 {
     let bytes = line.as_bytes();
-    let mut char_count_per_char: [u8; 32] = [0u8; 32];
-    let mut unique_char_count = 0usize;
+    // Works only up to amount of 15, 4 bits per char, 32 chars memory.
+    let mut char_bits = 0u128;
     for n in 0..bytes.len()
     {
 
-        let new_value = (bytes[n] - 'a' as u8) as usize;
-        unique_char_count += if char_count_per_char[new_value] == 0 { 1 } else { 0 };
-        char_count_per_char[new_value] += 1;
+        let new_value = bytes[n] - 'a' as u8;
+        // Reserve 4 bits per char
+        char_bits += 1u128 << (new_value * 4);
         if n >= amount
         {
-            let old_value = (bytes[n - amount] - 'a' as u8) as usize;
-            char_count_per_char[old_value] -= 1;
-            unique_char_count -= if char_count_per_char[old_value] == 0 { 1 } else { 0 };
+            let old_value = bytes[n - amount] - 'a' as u8;
+            char_bits -= 1u128 << (old_value * 4);
         }
-        if unique_char_count == amount
+        // Combine 2 upper bits and 2 lower bits in other words
+        // For example
+        //   0011 0101 0000 0110 0110 0100
+        // | 0000 1101 0100 0001 1001 1010
+        // = 0011 1101 0100 0011 1111 1110
+        let mut char_unique_bits = char_bits | (char_bits >> 2);
+
+        // Then move the result one more bit to right and or together,
+        // this means that if any of the 4 bits is 1, the lowest bit will be 1
+        //   0011 1101 0100 0011 1111 1110
+        // | 0001 1110 1010 0001 1111 1111
+        // = 0011 1111 1110 0011 1111 1111
+        char_unique_bits |= char_unique_bits >> 1;
+
+        // Finally mask every fourth bit, which means value 0x1
+        //   0011 1111 1110 0011 1111 1111
+        // & 0001 0001 0001 0001 0001 0001
+        // = 0001 0001 0000 0001 0001 0001
+        char_unique_bits &= 0x1111_1111_1111_1111_1111_1111_1111_1111u128;
+
+        // And count set bits.
+        if char_unique_bits.count_ones() >= amount as u32
         {
             return n + 1;
         }

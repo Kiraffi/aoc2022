@@ -55,8 +55,28 @@ fn find_amount_unique(line: &str, amount: usize) -> usize
         // = 0001 0001 0000 0001 0001 0001
         char_unique_bits &= 0x1111_1111_1111_1111_1111_1111_1111_1111u128;
 
-        // And count set bits.
-        if char_unique_bits.count_ones() >= amount as u32
+        // And count set bits. Easy way
+        //let count_bits = char_unique_bits.count_ones() as usize;
+
+        // Do some bit operations to count the unique bits.
+        // First move upper 64 bits and sum with lower 64 bits and take only 64 bits.
+        let mut count_bits = (char_unique_bits + (char_unique_bits >> 64)) as u64;
+
+        // Then from there sum every 4 bits to next 4 bits
+        count_bits += count_bits >> 4;
+
+        // Mask to take lower 4 from every 8 bits, since we have limit of 4 bits per char
+        count_bits &= 0x0f0f_0f0f_0f0f_0f0fu64;
+
+        // Then from here on just do halve the summed bits
+        count_bits += count_bits >> 32;
+        count_bits += count_bits >> 16;
+        count_bits += count_bits >> 8;
+
+        // Finally mask the lowest 8 bits
+        count_bits &= 0xff;
+
+        if count_bits as usize >= amount
         {
             return n + 1;
         }

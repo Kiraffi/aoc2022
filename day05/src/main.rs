@@ -70,13 +70,13 @@ fn day05_1(print_outcome: bool, content: &str)
 
     for c in commands
     {
-        for _ in 0..c.amount
-        {
-            let from_len = crates[c.from - 1].len() - 1;
-            let ch = crates[c.from - 1][from_len];
-            crates[c.to - 1].push(ch);
-            crates[c.from - 1].remove(from_len);
-        }
+        let from_len = crates[c.from - 1].len() - c.amount;
+        let mut slice: Vec<u8> = Vec::new();
+        slice.extend_from_slice(&crates[c.from - 1][from_len..]);
+        slice.reverse();
+        crates[c.from - 1].truncate(from_len);
+        crates[c.to - 1].extend_from_slice(&slice);
+
     }
 
     if print_outcome
@@ -103,13 +103,10 @@ fn day05_2(print_outcome: bool, content: &str)
     for c in commands
     {
         let from_len = crates[c.from - 1].len() - c.amount;
-
-        for _ in 0..c.amount
-        {
-            let ch = crates[c.from - 1][from_len];
-            crates[c.to - 1].push(ch);
-            crates[c.from - 1].remove(from_len);
-        }
+        let mut slice: Vec<u8> = Vec::new();
+        slice.extend_from_slice(&crates[c.from - 1][from_len..]);
+        crates[c.from - 1].truncate(from_len);
+        crates[c.to - 1].extend_from_slice(&slice);
     }
 
     if print_outcome

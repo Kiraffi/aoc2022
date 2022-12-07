@@ -20,81 +20,64 @@ fn main()
     println!("Day {} duration: {}us", DAY_STR, now.elapsed().as_micros() as f32 / RUN_AMOUNT as f32);
 }
 
-fn dir_down<F>(
-    mut f: F,
-    amounts: &mut Vec<usize>,
-    dir_amount: &mut i32)
-    where F: FnMut(usize)
+fn calculate_size(content: &'static str) -> Vec<usize>
 {
-    let amount = (*dir_amount) as usize;
-    f(amounts[amount]);
-    if amount > 0
-    {
-        amounts[amount - 1] += amounts[amount];
-    }
-    *dir_amount -= 1;
-}
-
-
-fn calculate_size<F>(content: &'static str, mut f: F) -> usize
-    where F: FnMut(usize)
-{
+    let mut dir_sizes: Vec<usize> = Vec::new();
     let mut dir_amount = 0;
     let mut amounts: Vec<usize> = Vec::new();
 
     for line in content.lines()
     {
-        let mut words = line.split(' ');
-
-        let word0 = words.next().unwrap();
-        let word1 = words.next().unwrap();
-        let word2 = match words.next() { None => "", Some(x) => x};
-        if word0 == "$" && word1 == "cd"
+        if line.starts_with("$ cd /")
         {
-            if word2 == "/"
+            dir_amount = 0;
+            amounts = Vec::new();
+            amounts.push(0);
+        }
+        else if line.starts_with("$ cd ..")
+        {
+            dir_sizes.push(amounts[dir_amount]);
+            amounts[dir_amount - 1] += amounts[dir_amount];
+            dir_amount -= 1;
+        }
+        else if line.starts_with("$ cd ")
+        {
+            dir_amount += 1;
+            if dir_amount as usize >= amounts.len()
             {
-                dir_amount = 0;
-                amounts = Vec::new();
                 amounts.push(0);
             }
-            else if word2 == ".."
-            {
-                dir_down(&mut f, &mut amounts, &mut dir_amount);
-            }
-            else
-            {
-                dir_amount += 1;
-                if dir_amount as usize >= amounts.len()
-                {
-                    amounts.push(0);
-                }
-                amounts[dir_amount as usize] = 0;
-            }
+            amounts[dir_amount as usize] = 0;
         }
-        else if word0 != "$" && word0 != "dir"
+        else if !line.starts_with("$ ls") && !line.starts_with("dir") && line.len() > 0
         {
+            let word0 = line.split(' ').next().unwrap();
             let file_size = word0.parse::<usize>().unwrap();
             amounts[dir_amount as usize] += file_size;
         }
     }
-    while dir_amount >= 0
+    while dir_amount > 0
     {
-        dir_down(&mut f, &mut amounts, &mut dir_amount);
+        dir_sizes.push(amounts[dir_amount]);
+        amounts[dir_amount - 1] += amounts[dir_amount];
+        dir_amount -= 1;
     }
-
-    return amounts[0];
+    dir_sizes.push(amounts[0]);
+    return dir_sizes;
 }
+
+
 
 fn part_a(print_outcome: bool, content: &'static str)
 {
     let mut total_under_100k = 0;
-    calculate_size(content, |dir_size|
+    for dir_size in calculate_size(content)
     {
         if dir_size < 100000
         {
             total_under_100k += dir_size;
         }
-    });
+    }
     if print_outcome
     {
         println!("Day {}-1: Sum of size of directories with size under 100000: {}", DAY_STR, total_under_100k);
@@ -104,20 +87,21 @@ fn part_a(print_outcome: bool, content: &'static str)
 
 fn part_b(print_outcome: bool, content: &'static str)
 {
-    let used_space = calculate_size(content, |_|{});
+    let dir_sizes = calculate_size(content);
+    let used_space = *dir_sizes.last().unwrap();
 
     let mut smallest_folder = !0;
     if 70000000 - used_space >= 30000000
     {
         smallest_folder = 0;
     }
-    calculate_size(content, |dir_size|
+    for dir_size in dir_sizes
     {
         if dir_size >= 30000000 - (70000000 - used_space)
         {
             smallest_folder = std::cmp::min(smallest_folder, dir_size);
         }
-    });
+    };
     if print_outcome
     {
         println!("Day {}-2: Smallest directory to have over 30000000: {}", DAY_STR, smallest_folder);

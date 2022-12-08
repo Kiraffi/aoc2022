@@ -23,46 +23,40 @@ fn main()
 fn calculate_size(content: &'static str) -> Vec<usize>
 {
     let mut dir_sizes: Vec<usize> = Vec::new();
-    let mut dir_amount = 0;
     let mut amounts: Vec<usize> = Vec::new();
 
     for line in content.lines()
     {
         if line.starts_with("$ cd /")
         {
-            dir_amount = 0;
             amounts = Vec::new();
             amounts.push(0);
         }
         else if line.starts_with("$ cd ..")
         {
-            dir_sizes.push(amounts[dir_amount]);
-            amounts[dir_amount - 1] += amounts[dir_amount];
-            dir_amount -= 1;
+            let amount = amounts.pop().unwrap();
+            *amounts.last_mut().unwrap() += amount;
+            dir_sizes.push(amount);
         }
         else if line.starts_with("$ cd ")
         {
-            dir_amount += 1;
-            if dir_amount as usize >= amounts.len()
-            {
-                amounts.push(0);
-            }
-            amounts[dir_amount as usize] = 0;
+            amounts.push(0);
         }
         else if !line.starts_with("$ ls") && !line.starts_with("dir") && line.len() > 0
         {
             let word0 = line.split(' ').next().unwrap();
             let file_size = word0.parse::<usize>().unwrap();
-            amounts[dir_amount as usize] += file_size;
+            *amounts.last_mut().unwrap() += file_size;
         }
     }
-    while dir_amount > 0
+    // Pop didnt work in for loop?
+    amounts.reverse();
+    let mut amount_sum = 0;
+    for amount in amounts
     {
-        dir_sizes.push(amounts[dir_amount]);
-        amounts[dir_amount - 1] += amounts[dir_amount];
-        dir_amount -= 1;
+        amount_sum += amount;
+        dir_sizes.push(amount_sum);
     }
-    dir_sizes.push(amounts[0]);
     return dir_sizes;
 }
 

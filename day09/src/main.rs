@@ -65,19 +65,10 @@ fn simulate_movement(content: &'static str, knots: usize) -> usize
                 let abs_diff_x = i32::abs(diff_x);
                 let abs_diff_y = i32::abs(diff_y);
 
-                if (abs_diff_x >= 1 && abs_diff_y >= 1)
-                    && (abs_diff_x >= 2 || abs_diff_y >= 2)
+                if abs_diff_x >= 2 || abs_diff_y >= 2
                 {
-                    curr.x += diff_x / abs_diff_x;
-                    curr.y += diff_y / abs_diff_y;
-                }
-                else if abs_diff_x >= 2
-                {
-                    curr.x += diff_x / abs_diff_x;
-                }
-                else if abs_diff_y >= 2
-                {
-                    curr.y += diff_y / abs_diff_y;
+                    curr.x += if abs_diff_x > 0 { diff_x / abs_diff_x } else { 0 };
+                    curr.y += if abs_diff_y > 0 { diff_y / abs_diff_y } else { 0 };
                 }
             }
             let tail = rope[knots - 1];

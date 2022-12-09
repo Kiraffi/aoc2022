@@ -38,6 +38,7 @@ fn simulate_movement(content: &'static str, knots: usize) -> usize
     let mut width: i32 = 0;
     let mut height: i32 = 0;
     let mut map: Vec<Vec<u8>> = Vec::new();
+    let mut map_offset = Pos{x: 0, y: 0};
     map.push(Vec::new());
     for line in content.lines()
     {
@@ -71,20 +72,17 @@ fn simulate_movement(content: &'static str, knots: usize) -> usize
                     curr.y += if abs_diff_y > 0 { diff_y / abs_diff_y } else { 0 };
                 }
             }
-            let tail = rope[knots - 1];
-            if tail.x < 0
+            let &tail = &rope[knots - 1];
+            if tail.x + map_offset.x < 0
             {
                 for j in 0..height
                 {
                     map[j as usize].insert(0, 0);
                 }
-                for knot in &mut rope
-                {
-                    knot.x += 1;
-                }
-                width += 1
+                width += 1;
+                map_offset.x += 1;
             }
-            if tail.x >= width
+            if tail.x + map_offset.x >= width
             {
                 for j in 0..height
                 {
@@ -93,26 +91,21 @@ fn simulate_movement(content: &'static str, knots: usize) -> usize
                 width += 1
             }
 
-            if tail.y < 0
+            if tail.y + map_offset.y < 0
             {
                 map.insert(0, Vec::new());
                 map[0].resize(width as usize, 0);
                 height += 1;
-
-                for knot in &mut rope
-                {
-                    knot.y += 1;
-                }
+                map_offset.y += 1;
             }
 
-            if tail.y >= height
+            if tail.y + map_offset.y >= height
             {
                 map.push(Vec::new());
                 map[height as usize].resize(width as usize, 0);
                 height += 1;
             }
-            let tail = rope[knots - 1];
-            map[tail.y as usize][tail.x as usize] = 1;
+            map[(tail.y + map_offset.y) as usize][(tail.x + map_offset.x) as usize] = 1;
         }
     }
     for m in map

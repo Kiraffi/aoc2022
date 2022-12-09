@@ -1,4 +1,6 @@
 
+use std::collections::HashSet;
+
 const RUN_AMOUNT:u32 = 1;
 const DAY_STR: &'static str = "09";
 
@@ -22,7 +24,7 @@ fn main()
     println!("Day {} duration: {}us", DAY_STR, now.elapsed().as_micros() as f32 / RUN_AMOUNT as f32);
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Eq, Hash, PartialEq)]
 struct Pos
 {
     x: i32,
@@ -31,15 +33,9 @@ struct Pos
 
 fn simulate_movement(content: &'static str, knots: usize) -> usize
 {
-    let mut visited_squares = 0;
     let mut rope: Vec<Pos> = Vec::new();
     rope.resize(knots, Pos{x: 0, y: 0});
-
-    let mut width: i32 = 0;
-    let mut height: i32 = 0;
-    let mut map: Vec<Vec<u8>> = Vec::new();
-    let mut map_offset = Pos{x: 0, y: 0};
-    map.push(Vec::new());
+    let mut visited: HashSet<Pos> = HashSet::new();
     for line in content.lines()
     {
         let mut parsed = line.split(' ');
@@ -73,70 +69,10 @@ fn simulate_movement(content: &'static str, knots: usize) -> usize
                 }
             }
             let &tail = &rope[knots - 1];
-            if tail.x + map_offset.x < 0
-            {
-                for j in 0..height
-                {
-                    map[j as usize].insert(0, 0);
-                }
-                width += 1;
-                map_offset.x += 1;
-            }
-            if tail.x + map_offset.x >= width
-            {
-                for j in 0..height
-                {
-                    map[j as usize].push(0);
-                }
-                width += 1
-            }
-
-            if tail.y + map_offset.y < 0
-            {
-                map.insert(0, Vec::new());
-                map[0].resize(width as usize, 0);
-                height += 1;
-                map_offset.y += 1;
-            }
-
-            if tail.y + map_offset.y >= height
-            {
-                map.push(Vec::new());
-                map[height as usize].resize(width as usize, 0);
-                height += 1;
-            }
-            map[(tail.y + map_offset.y) as usize][(tail.x + map_offset.x) as usize] = 1;
+            visited.insert(tail);
         }
     }
-    for m in map
-    {
-        for n in m
-        {
-            if n == 1
-            {
-                visited_squares += 1;
-            }
-        }
-    }
-/*
-    for m in map
-    {
-        for n in m
-        {
-            if n == 0
-            {
-                print!("{}", ' ');
-            }
-            else
-            {
-                print!("{}", '#');
-            }
-        }
-        println!("");
-    }
-*/
-
-    return visited_squares;
+    return visited.len();
 }
 
 fn part_a(print_outcome: bool, content: &'static str)

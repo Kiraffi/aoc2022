@@ -9,9 +9,7 @@ fn main()
     let _data = include_str!("../../data/day10.txt");
 
     let now = std::time::Instant::now();
-    /*    let mut top_visible = true;
-    let mut bot_visible = true;
-
+    /*
     for _ in 0..RUN_AMOUNT - 1
     {
         part_a(false, &_data);
@@ -30,17 +28,25 @@ struct Cpu
     crt: Vec<Vec<u8>>
 }
 
-fn eval_clock(cpu: &mut Cpu, add_value: i64)
+fn draw(cpu: &mut Cpu)
 {
-    let c = if i64::abs(cpu.x - ((cpu.clock - 1) % 40)) <= 1 { '#' as u8} else {'.' as u8};
-    cpu.crt[((cpu.clock - 1) / 40) as usize][((cpu.clock - 1) % 40) as usize] = c;
+    let distance = i64::abs(cpu.x - ((cpu.clock - 1) % 40));
+    let c = if distance <= 1 { '#' as u8 } else { '.' as u8 };
+    let x = ((cpu.clock - 1) % 40) as usize;
+    let y = ((cpu.clock - 1) / 40) as usize;
+    cpu.crt[y][x] = c;
+}
+
+fn do_cycle(cpu: &mut Cpu, add_value: i64)
+{
+    draw(cpu);
     cpu.clock += 1;
     cpu.x += add_value;
 }
 
-fn eval_sum(cpu: &Cpu) -> i64
+fn eval_signal(cpu: &Cpu) -> i64
 {
-    if (cpu.clock - 20) % 40 == 0
+    if cpu.clock % 40 == 20
     {
         return cpu.clock * cpu.x;
     }
@@ -53,7 +59,7 @@ fn part_a(print_outcome: bool, content: &'static str)
     let sum_checkpoints = content.lines()
         .fold(0, |prev, line|
         {
-            let mut sum = 0;
+            let mut sum = prev;
             let arr: Vec<&str> = line.split(' ').collect();
             let add_value =
                 if arr.len() > 1 { arr[1].parse::<i64>().unwrap_or_default() } else { 0 };
@@ -61,19 +67,19 @@ fn part_a(print_outcome: bool, content: &'static str)
             {
                 "noop" =>
                 {
-                    eval_clock(&mut cpu, 0);
-                    sum += eval_sum(&cpu);
+                    do_cycle(&mut cpu, 0);
+                    sum += eval_signal(&cpu);
                 },
                 "addx" =>
                 {
-                    eval_clock(&mut cpu, 0);
-                    sum += eval_sum(&cpu);
-                    eval_clock(&mut cpu, add_value);
-                    sum += eval_sum(&cpu);
+                    do_cycle(&mut cpu, 0);
+                    sum += eval_signal(&cpu);
+                    do_cycle(&mut cpu, add_value);
+                    sum += eval_signal(&cpu);
                 },
                 _ => ()
             }
-            prev + sum
+            return sum;
         });
     if print_outcome
     {

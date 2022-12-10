@@ -23,48 +23,64 @@ fn main()
     println!("Day {} duration: {}us", DAY_STR, now.elapsed().as_micros() as f32 / RUN_AMOUNT as f32);
 }
 
+struct Cpu
+{
+    x: i64,
+    clock: i64,
+    crt: Vec<Vec<u8>>
+}
+
+fn eval_clock(cpu: &mut Cpu, add_value: i64)
+{
+    let c = if i64::abs(cpu.x - ((cpu.clock - 1) % 40)) <= 1 { '#' as u8} else {'.' as u8};
+    cpu.crt[((cpu.clock - 1) / 40) as usize][((cpu.clock - 1) % 40) as usize] = c;
+    cpu.clock += 1;
+    cpu.x += add_value;
+}
+
+fn eval_sum(cpu: &Cpu) -> i64
+{
+    if (cpu.clock - 20) % 40 == 0
+    {
+        return cpu.clock * cpu.x;
+    }
+    return 0;
+}
+
 fn part_a(print_outcome: bool, content: &'static str)
 {
-    let mut clock = 1;
-    let mut x: i64 = 1;
-    let mut sum_checkpoints = 0;
-    let mut crt = vec![vec!['.' as u8; 40]; 6];
-    for line in content.lines()
-    {
-        let mut words = line.split(' ');
-        let cmd = words.next().unwrap();
-        let value = words.next().unwrap_or_default().parse::<i64>().unwrap_or_default();
-        let mut add_clock = 0;
-        match cmd
+    let mut cpu = Cpu {x: 1, clock: 1, crt: vec![vec!['.' as u8; 40]; 6]};
+    let sum_checkpoints = content.lines()
+        .fold(0, |prev, line|
         {
-            "noop" => add_clock = 1,
-            "addx" => add_clock = 2,
-            _ => ()
-        }
-
-        for i in 1..=add_clock
-        {
-            if i64::abs(x - ((clock - 1) % 40)) <= 1
+            let mut sum = 0;
+            let arr: Vec<&str> = line.split(' ').collect();
+            let add_value =
+                if arr.len() > 1 { arr[1].parse::<i64>().unwrap_or_default() } else { 0 };
+            match arr[0]
             {
-                crt[((clock - 1) / 40) as usize][((clock - 1) % 40) as usize] = '#' as u8;
+                "noop" =>
+                {
+                    eval_clock(&mut cpu, 0);
+                    sum += eval_sum(&cpu);
+                },
+                "addx" =>
+                {
+                    eval_clock(&mut cpu, 0);
+                    sum += eval_sum(&cpu);
+                    eval_clock(&mut cpu, add_value);
+                    sum += eval_sum(&cpu);
+                },
+                _ => ()
             }
-            clock += 1;
-            if i == add_clock
-            {
-                x += value;
-            }
-            if (clock == 20) || (clock >= 60 && (clock - 20) % 40 == 0)
-            {
-                sum_checkpoints += clock * x;
-            }
-        }
-    }
+            prev + sum
+        });
     if print_outcome
     {
         println!("Day {}-1: Sum of signal points: {}", DAY_STR, sum_checkpoints);
         println!("Day {}-2: Image", DAY_STR);
 
-        for s in crt
+        for s in cpu.crt
         {
             println!("{}", std::str::from_utf8(s.as_slice()).unwrap());
         }

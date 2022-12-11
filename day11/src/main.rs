@@ -23,51 +23,32 @@ fn main()
 
 fn parse(content: &'static str) -> Vec<Monkey>
 {
-    let mut monkey_index = 0;
     let mut monkeys: Vec<Monkey> = Vec::new();
-    for line in content.lines()
+    for lines in content.lines()
+        .collect::<Vec<&str>>()
+        .chunks(7)
     {
-        let line = line.trim();
-
-        if line.starts_with("Monkey")
-        {
-            monkeys.push(Monkey{
-                items: Vec::new(), op: Op::Add(0),
-                test: 0, true_cond: 0, false_cond: 0, inspects: 0});
-            monkey_index = monkeys.len() - 1;
-        }
-        let monkey = &mut monkeys[monkey_index];
-        let words: Vec<&str> = line.split(' ').collect();
-
-        if words[0] == "Starting"
-        {
-            for i in 2..words.len()
+        monkeys.push(Monkey{
+            items: lines[1]
+                .split_once(':').unwrap()
+                .1
+                .split(',')
+                .map(|x| { x.trim().parse::<u64>().unwrap_or_default() })
+                .collect(),
+            op:
             {
-                let num = words[i].split(',').next().unwrap();
-                monkey.items.push(num.parse::<u64>().unwrap());
-            }
-        }
-        else if words[0] == "Operation:"
-        {
-            let value = words[5].parse::<u64>().unwrap_or(!0u64);
-            match words[4]
-            {
-                "+" => monkey.op = Op::Add(value),
-                _ => monkey.op = Op::Mul(value)
-            }
-        }
-        else if words[0] == "Test:"
-        {
-            monkey.test = words[3].parse::<u64>().unwrap();
-        }
-        else if words.len() > 1 && words[1] == "true:"
-        {
-            monkey.true_cond = words[5].parse::<usize>().unwrap();
-        }
-        else if  words.len() > 1 && words[1] == "false:"
-        {
-            monkey.false_cond = words[5].parse::<usize>().unwrap();
-        }
+                let value = lines[2][25..].parse::<u64>().unwrap_or(!0u64);
+                match lines[2].as_bytes()[23] as char
+                {
+                    '+' => Op::Add(value),
+                    _ => Op::Mul(value)
+                }
+            },
+            test: lines[3][21..].parse::<u64>().unwrap(),
+            true_cond: lines[4][29..].parse::<usize>().unwrap(),
+            false_cond: lines[5][30..].parse::<usize>().unwrap(),
+            inspects: 0
+        });
     }
     return monkeys;
 }
@@ -79,10 +60,16 @@ fn throw_packets<F>(monkeys: &mut Vec<Monkey>, rounds: usize, f: F)
     {
         for i in 0..monkeys.len()
         {
-            // Borrow checeker.......................
-            let mut false_throws: Vec<u64> = Vec::new();
-            let mut true_throws: Vec<u64> = Vec::new();
-            let m = &monkeys[i];
+            assert!(i != monkeys[i].false_cond
+                && i != monkeys[i].true_cond
+                && monkeys[i].false_cond != monkeys[i].true_cond);
+
+            // Fight the borrow checeker...
+            let m = unsafe { &mut *monkeys.as_mut_ptr().add(i) };
+            let m_false = unsafe { &mut *monkeys.as_mut_ptr().add(m.false_cond) };
+            let m_true = unsafe { &mut *monkeys.as_mut_ptr().add(m.true_cond) };
+
+            m.inspects += m.items.len();
             for &i in m.items.iter()
             {
                 let i = match m.op
@@ -90,22 +77,17 @@ fn throw_packets<F>(monkeys: &mut Vec<Monkey>, rounds: usize, f: F)
                     Op::Add(x) => if x != !0u64 { i + x } else { i + i },
                     Op::Mul(x) => if x != !0u64 { i * x } else { i * i },
                 };
-                let i = f(i); //i / 3;
+                let i = f(i);
                 if i % m.test == 0
                 {
-                    true_throws.push(i);
+                    m_true.items.push(i);
                 }
                 else
                 {
-                    false_throws.push(i);
+                    m_false.items.push(i);
                 }
             }
-            let false_throw_index = m.false_cond;
-            let true_throw_index = m.true_cond;
-            monkeys[false_throw_index].items.append(&mut false_throws);
-            monkeys[true_throw_index].items.append(&mut true_throws);
-            monkeys[i].inspects += monkeys[i].items.len();
-            monkeys[i].items.clear();
+            m.items.clear();
         }
     }
 }
@@ -154,10 +136,9 @@ fn part_b(print_outcome: bool, content: &'static str)
 {
     let mut monkeys = parse(content);
     let mut divisable = 1;
-    for i in 0..monkeys.len()
+    for m in &monkeys
     {
-            // Borrow checeker.......................
-            divisable *= monkeys[i].test;
+            divisable *= m.test;
     }
     throw_packets(&mut monkeys, 10000, |x| { x % divisable});
     let inspects = get_inspects(&monkeys);

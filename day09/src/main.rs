@@ -27,8 +27,8 @@ fn main()
 #[derive(Clone, Copy, Eq, Hash, PartialEq)]
 struct Pos
 {
-    x: i32,
-    y: i32
+    x: i16,
+    y: i16
 }
 
 fn simulate_movement(content: &'static str, knots: usize) -> usize
@@ -38,14 +38,12 @@ fn simulate_movement(content: &'static str, knots: usize) -> usize
     let mut visited: HashSet<Pos> = HashSet::new();
     for line in content.lines()
     {
-        let mut parsed = line.split(' ');
-        let l = parsed.next().unwrap();
-        let l = l.as_bytes();
-        let amount = parsed.next().unwrap().parse::<i32>().unwrap();
-
+        let (dir, value) = line.split_once(' ').unwrap();
+        let amount = value.parse::<i32>().unwrap();
+        let dir = dir.as_bytes()[0] as char;
         for _ in 0..amount
         {
-            match l[0] as char
+            match dir
             {
                 'L' => rope[0].x -= 1,
                 'R' => rope[0].x += 1,
@@ -59,13 +57,15 @@ fn simulate_movement(content: &'static str, knots: usize) -> usize
                 let mut curr = &mut rope[i];
                 let diff_x = prev.x - curr.x;
                 let diff_y = prev.y - curr.y;
-                let abs_diff_x = i32::abs(diff_x);
-                let abs_diff_y = i32::abs(diff_y);
+                let abs_x = i16::abs(diff_x);
+                let abs_y = i16::abs(diff_y);
 
-                if abs_diff_x >= 2 || abs_diff_y >= 2
+                if (abs_x | abs_y) >= 2
                 {
-                    curr.x += if abs_diff_x > 0 { diff_x / abs_diff_x } else { 0 };
-                    curr.y += if abs_diff_y > 0 { diff_y / abs_diff_y } else { 0 };
+                    if diff_x < 0 { curr.x -= 1; }
+                    if diff_x > 0 { curr.x += 1; }
+                    if diff_y < 0 { curr.y -= 1; }
+                    if diff_y > 0 { curr.y += 1; }
                 }
             }
             let &tail = &rope[knots - 1];

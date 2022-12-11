@@ -1,23 +1,21 @@
 
-
 const RUN_AMOUNT:u32 = 1;
 const DAY_STR: &'static str = "11";
+const DATA: &'static str = include_str!("../../data/day11.txt");
+const _TEST_DATA: &'static str = include_str!("../test_data.txt");
 
 fn main()
 {
-    let _test_data = include_str!("../test_data.txt");
-    let _data = include_str!("../../data/day11.txt");
-
     let now = std::time::Instant::now();
     /*
     for _ in 0..RUN_AMOUNT - 1
     {
-        part_a(false, &_data);
-        part_b(false, &_data);
+        _ = part_a(&_data);
+        _ = part_b(&_data);
     }
     */
-    part_a(true, &_data);
-    part_b(true, &_data);
+    println!("Day {}-1: Inspects: {}", DAY_STR, part_a(&DATA));
+    println!("Day {}-2: Inspects: {}", DAY_STR, part_b(&DATA));
     println!("Day {} duration: {}us", DAY_STR, now.elapsed().as_micros() as f32 / RUN_AMOUNT as f32);
 }
 
@@ -33,7 +31,7 @@ fn parse(content: &'static str) -> Vec<Monkey>
                 .split_once(':').unwrap()
                 .1
                 .split(',')
-                .map(|x| { x.trim().parse::<u64>().unwrap_or_default() })
+                .map(|x| { x.trim().parse::<u64>().unwrap() })
                 .collect(),
             op:
             {
@@ -120,30 +118,32 @@ struct Monkey
     inspects: usize
 }
 
-fn part_a(print_outcome: bool, content: &'static str)
+#[test]
+fn parta()
+{
+    let value = part_a(&_TEST_DATA);
+    assert_eq!(value, 10605);
+}
+
+fn part_a(content: &'static str) -> usize
 {
     let mut monkeys = parse(content);
     throw_packets(&mut monkeys, 20, |x| { x / 3});
-
-    let inspects = get_inspects(&monkeys);
-    if print_outcome
-    {
-        println!("Day {}-1: Inspects: {}", DAY_STR, inspects);
-    }
+    return get_inspects(&monkeys);
 }
 
-fn part_b(print_outcome: bool, content: &'static str)
+#[test]
+fn partb()
+{
+    let value = part_b(&_TEST_DATA);
+    assert_eq!(value, 2713310158);
+}
+
+fn part_b(content: &'static str) -> usize
 {
     let mut monkeys = parse(content);
-    let mut divisable = 1;
-    for m in &monkeys
-    {
-            divisable *= m.test;
-    }
+    let divisable =
+        monkeys.iter().fold(1, |prev, m| { prev * m.test });
     throw_packets(&mut monkeys, 10000, |x| { x % divisable});
-    let inspects = get_inspects(&monkeys);
-    if print_outcome
-    {
-        println!("Day {}-2: Inspects: {}", DAY_STR, inspects);
-    }
+    return get_inspects(&monkeys);
 }

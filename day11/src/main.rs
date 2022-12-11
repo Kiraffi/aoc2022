@@ -38,9 +38,9 @@ fn parse(content: &'static str) -> Vec<Monkey>
             op:
             {
                 let value = lines[2][25..].parse::<u64>().unwrap_or(!0u64);
-                match lines[2].as_bytes()[23] as char
+                match &lines[2][23..24]
                 {
-                    '+' => Op::Add(value),
+                    "+" => Op::Add(value),
                     _ => Op::Mul(value)
                 }
             },

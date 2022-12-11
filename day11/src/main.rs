@@ -119,7 +119,7 @@ struct Monkey
 }
 
 #[test]
-fn parta()
+fn part_a_test()
 {
     let value = part_a(&_TEST_DATA);
     assert_eq!(value, 10605);
@@ -133,7 +133,7 @@ fn part_a(content: &'static str) -> usize
 }
 
 #[test]
-fn partb()
+fn part_b_test()
 {
     let value = part_b(&_TEST_DATA);
     assert_eq!(value, 2713310158);

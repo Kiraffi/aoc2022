@@ -31,13 +31,12 @@ struct Tile
 {
     distance: usize,
     height: u8,
+    is_goal: bool
 }
 
 struct HeightMap
 {
     map: Vec<Vec<Tile>>,
-    pos_end_x: i32,
-    pos_end_y: i32
 }
 
 fn is_valid_tile(map: & HeightMap, pos_x: i32, pos_y: i32) -> bool
@@ -80,7 +79,7 @@ fn find_exit(map: &mut HeightMap, pos_x: i32, pos_y: i32) -> usize
             continue;
         }
         tile.distance = distance;
-        if pos_x == map.pos_end_x && pos_y == map.pos_end_y
+        if tile.is_goal
         {
             return distance;
         }
@@ -110,32 +109,17 @@ fn find_exit(map: &mut HeightMap, pos_x: i32, pos_y: i32) -> usize
     return !0usize;
 }
 
-fn parse(content: &'static str) -> (HeightMap, i32, i32)
+fn parse(content: &'static str) -> HeightMap
 {
-    let mut map = HeightMap {map: Vec::new(), pos_end_x: 0, pos_end_y: 0};
+    let mut map = HeightMap {map: Vec::new()};
     for line in content.lines()
     {
         map.map.push(line
             .chars()
-            .map(|s| {Tile{distance: !0usize, height: s as u8}}).collect());
-    }
-    let mut pos_start_x = 0;
-    let mut pos_start_y = 0;
-
-    for (y, tiles) in map.map.iter_mut().enumerate()
-    {
-        for (x, tile) in tiles.iter_mut().enumerate()
-        {
-            match tile.height as char
-            {
-                'S' => { tile.height = 'a' as u8; pos_start_x = x as i32; pos_start_y = y as i32; }
-                'E' => { tile.height = 'z' as u8; map.pos_end_x = x as i32; map.pos_end_y = y as i32; },
-                _ => ()
-            }
-        }
+            .map(|s| {Tile{distance: !0usize, height: s as u8, is_goal: false}}).collect());
     }
 
-    return (map, pos_start_x, pos_start_y);
+    return map;
 }
 
 #[test]
@@ -147,7 +131,26 @@ fn part_a_test()
 
 fn part_a(content: &'static str) -> usize
 {
-    let (mut map, pos_start_x, pos_start_y) = parse(content);
+    let mut map = parse(content);
+
+    let mut pos_start_x = 0;
+    let mut pos_start_y = 0;
+
+    // Flip the height map to go from end to start, one start point, and start
+    // searching from end...
+    for (y, tiles) in map.map.iter_mut().enumerate()
+    {
+        for (x, tile) in tiles.iter_mut().enumerate()
+        {
+            match tile.height as char
+            {
+                'S' => { tile.height = 'a' as u8; pos_start_x = x as i32; pos_start_y = y as i32; }
+                'E' => { tile.height = 'z' as u8; tile.is_goal = true; },
+                _ => ()
+            }
+        }
+    }
+
     return find_exit(&mut map, pos_start_x, pos_start_y);
 }
 
@@ -161,10 +164,10 @@ fn part_b_test()
 fn part_b(content: &'static str) -> usize
 {
     let mut smallest = !0usize;
-    let (mut map, _, _) = parse(content);
+    let mut map = parse(content);
 
-    let mut start_xs: Vec<i32> = Vec::new();
-    let mut start_ys: Vec<i32> = Vec::new();
+    let mut pos_start_x = 0;
+    let mut pos_start_y = 0;
 
     for (y, tiles) in map.map.iter_mut().enumerate()
     {
@@ -172,24 +175,15 @@ fn part_b(content: &'static str) -> usize
         {
             match tile.height as char
             {
-                'a' => { start_xs.push(x as i32); start_ys.push(y as i32); }
+                'S' => { tile.height = 'a' as u8; tile.is_goal = true; },
+                'E' => { tile.height = 'z' as u8; pos_start_x = x as i32; pos_start_y = y as i32; }
+                'a' => { tile.is_goal = true; },
                 _ => ()
             }
+            tile.height = 'z' as u8 - tile.height;
         }
     }
-    for i in 0..start_xs.len()
-    {
-        let x = start_xs[i];
-        let y = start_ys[i];
-        for tiles in map.map.iter_mut()
-        {
-            for tile in tiles.iter_mut()
-            {
-                tile.distance = !0usize;
-            }
-        }
-        smallest = std::cmp::min(smallest,
-            find_exit(&mut map, x, y));
-    }
+    smallest = std::cmp::min(smallest,
+        find_exit(&mut map, pos_start_x, pos_start_y));
     return smallest;
 }

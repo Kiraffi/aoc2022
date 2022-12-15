@@ -46,13 +46,6 @@ struct Sensor
     distance: i64
 }
 
-#[test]
-fn part_a_test()
-{
-    let value = part_a(&_TEST_DATA, 10);
-    assert_eq!(value, 26);
-}
-
 fn get_number(s: &str) -> i64
 {
     let s2 = s.split_once('=').unwrap().1;
@@ -94,12 +87,18 @@ fn parse_data(content: &'static str) -> (Vec<Sensor>, HashSet<Point>, Point, Poi
 
         max = Point::max(&max, &p1);
         max = Point::max(&max, &p2);
-        //println!("p1 {}:{}, p2 {}:{}", p1.x, p1.y, p2.x, p2.y);
 
         beacons.insert(beacon);
         sensors.push(Sensor {pos: sensor, distance: distance});
     }
     return (sensors, beacons, min, max);
+}
+
+#[test]
+fn part_a_test()
+{
+    let value = part_a(&_TEST_DATA, 10);
+    assert_eq!(value, 26);
 }
 
 fn part_a(content: &'static str, row: i64) -> i64
@@ -108,24 +107,44 @@ fn part_a(content: &'static str, row: i64) -> i64
         = parse_data(content);
 
     let mut visible_points = 0;
-    for x in min.x ..= max.x
+    let mut x = min.x;
+    while x <= max.x
     {
         for sensor in &sensors
         {
-            if beacons.contains(&Point{x: x, y: row})
-            {
-                continue;
-            }
             let diff_x = i64::abs(sensor.pos.x - x);
             let diff_y = i64::abs(sensor.pos.y - row);
             let distance = diff_x + diff_y;
             if sensor.distance >= distance
             {
-                visible_points += 1;
+                let old_x = x;
+                let new_x = sensor.distance - diff_y;
+                x = std::cmp::min(max.x, sensor.pos.x + new_x);
+                visible_points += x - old_x + 1;
+                break;
+            }
+        }
+        x += 1;
+    }
+    for beacon in &beacons
+    {
+        if beacon.y != row
+        {
+            continue;
+        }
+        for sensor in &sensors
+        {
+            let diff_x = i64::abs(sensor.pos.x - beacon.x);
+            let diff_y = i64::abs(sensor.pos.y - row);
+            let distance = diff_x + diff_y;
+            if sensor.distance >= distance
+            {
+                visible_points -= 1;
                 break;
             }
         }
     }
+
     println!("min {}:{}, max {}:{}", min.x, min.y, max.x, max.y);
     return visible_points;
 }
@@ -140,47 +159,7 @@ fn part_b_test()
 fn part_b(content: &'static str, search_x :i64, search_y: i64) -> i64
 {
 
-    let (sensors, _, _, _)
-        = parse_data(content);
-/*
-    let mut map: Vec<Vec<char>> = Vec::new();
-    map.resize((search_y + 1) as usize, Vec::new());
-    for y in 0..search_y + 1
-    {
-        map[y as usize].resize((search_x + 1) as usize, ' ');
-    }
-    println!("Resized");
-    for sensor in &sensors
-    {
-        println!("Distance: {}", sensor.distance);
-        let y_s = i64::max(sensor.pos.y - sensor.distance, 0);
-        let y_e = i64::min(sensor.pos.y + sensor.distance, search_y);
-        for y in y_s..=y_e
-        {
-            let diff_y = i64::abs(y - sensor.pos.y);
-            let x_diff = sensor.distance - diff_y;
-            let x_s = i64::max(0, sensor.pos.x - x_diff);
-            let x_e = i64::min(search_y, sensor.pos.x + x_diff);
-            for x in x_s..=x_e
-            {
-                map[y as usize][x as usize] = '#';
-            }
-        }
-        println!("Filled sensor");
-    }
-    println!("Filled");
-
-    for y in 0..=search_y
-    {
-        for x in 0..=search_x
-        {
-            if map[y as usize][x as usize] == ' '
-            {
-                return (x, y);
-            }
-        }
-    }
-    */
+    let (sensors, _, _, _) = parse_data(content);
 
     for y in 0 ..= search_y
     {

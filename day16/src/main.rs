@@ -1,10 +1,13 @@
 use std::collections::{HashMap, VecDeque};
-
+use std::sync::atomic::{Ordering, AtomicI64};
 
 const RUN_AMOUNT:u32 = 1;
 const DAY_STR: &'static str = "16";
 const DATA: &'static str = include_str!("../../data/day16.txt");
 const _TEST_DATA: &'static str = include_str!("../test_data.txt");
+
+
+static MAX_VALUE: AtomicI64 = AtomicI64::new(0);
 
 fn main()
 {
@@ -56,7 +59,20 @@ fn get_flow(connections: &HashMap<&str, Vec<Path>>,
     }
     let curr = &states[index];
     let mut flow_total_max = flow_total;
-
+    let mut max_max = flow_total;
+    for conn in &connections[&curr.pos[0..]]
+    {
+        if !visited.iter().find(|item| { *item == &conn.end }).is_none()
+        {
+            continue;
+        }
+        let new_time = curr.time + conn.distance + 1;
+        max_max += conn.flow * std::cmp::max(0, max_time - new_time);
+    }
+    if max_max < MAX_VALUE.load(Ordering::Acquire)
+    {
+        return 0;
+    }
     for conn in &connections[&curr.pos[0..]]
     {
         if !visited.iter().find(|item| { *item == &conn.end }).is_none()
@@ -80,6 +96,7 @@ fn get_flow(connections: &HashMap<&str, Vec<Path>>,
         let flow_val = get_flow(connections, new_state, new_visited, new_flow_total, max_time);
         flow_total_max = std::cmp::max(flow_total_max, flow_val);
     }
+    _ = MAX_VALUE.fetch_max(flow_total_max, Ordering::AcqRel);
 
     return flow_total_max;
 }
@@ -151,6 +168,7 @@ fn part_a_test()
 
 fn part_a(content: &'static str) -> i64
 {
+    MAX_VALUE.store(0, Ordering::Release);
     let paths = parse(content);
     let mut states: Vec<State> = Vec::new();
     states.push(State {pos: "AA".to_string(), flow_total: 0, time: 0});
@@ -168,6 +186,7 @@ fn part_b_test()
 
 fn part_b(content: &'static str) -> i64
 {
+    MAX_VALUE.store(0, Ordering::Release);
     let paths = parse(content);
     let mut states: Vec<State> = Vec::new();
     states.push(State {pos: "AA".to_string(), flow_total: 0, time: 0});

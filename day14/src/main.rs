@@ -1,5 +1,3 @@
-use std::cmp::Ordering;
-
 
 const RUN_AMOUNT:u32 = 1;
 const DAY_STR: &'static str = "14";
@@ -52,7 +50,7 @@ fn get_sorted(p1: &Point, p2: &Point) -> (Point, Point)
 {
     return (Point::min(&p1, &p2), Point::max(&p1, &p2));
 }
-fn create_map(points: &Vec<Vec<Point>>, min: &Point, max: &Point) -> Vec<Vec<char>>
+fn create_map(min: &Point, max: &Point) -> Vec<Vec<char>>
 {
     let mut map: Vec<Vec<char>> = Vec::new();
     map.resize_with(max.y - min.y + 4,
@@ -82,7 +80,7 @@ fn read_content(content: &str) -> (Vec<Vec<Point>>, Point, Point)
 
     return (points, min, max);
 }
-fn draw_map(map: &mut Vec<Vec<char>>, points: &mut Vec<Vec<Point>>, min: &Point, max: &Point)
+fn draw_map(map: &mut Vec<Vec<char>>, points: &mut Vec<Vec<Point>>, min: &Point)
 {
     for line in points.iter_mut()
     {
@@ -155,10 +153,10 @@ fn simulate(map: &mut Vec<Vec<char>>, min: &Point, max: &Point) -> usize
 
 fn part_a(content: &'static str) -> usize
 {
-    let (mut points, mut min, mut max) = read_content(content);
+    let (mut points, min, max) = read_content(content);
 
-    let mut map = create_map(&points, &min, &max);
-    draw_map(&mut map, &mut points, &min, &max);
+    let mut map = create_map(&min, &max);
+    draw_map(&mut map, &mut points, &min);
 
     //for y in 0..map.len()
     //{
@@ -183,8 +181,8 @@ fn part_b(content: &'static str) -> usize
     min.x = 10;
     max.x = 1000;
     max.y += 2;
-    let mut map = create_map(&points, &min, &max);
-    draw_map(&mut map, &mut points, &min, &max);
+    let mut map = create_map(&min, &max);
+    draw_map(&mut map, &mut points, &min);
 
     //for y in 0..map.len()
     //{

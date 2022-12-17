@@ -19,9 +19,6 @@ fn main()
     println!("Day {} duration: {}us", DAY_STR, now.elapsed().as_micros() as f32 / RUN_AMOUNT as f32);
 }
 
-
-}
-
 #[derive(Clone)]
 struct Point
 {
@@ -46,6 +43,7 @@ fn part_a_test()
 {
     let value = part_a(&_TEST_DATA);
     assert_eq!(value, 0);
+}
 
 fn part_a(content: &'static str) -> i64
 {

@@ -64,7 +64,7 @@ const fn get_bit_shape(shape: &[&'static str; 4]) -> u32
     return block_value;
 }
 
-const fn get_bit_shapes(shapes: &[[&'static str; 4]; BLOCKS]) -> [u32; 5]
+const fn get_bit_shapes(shapes: &[[&'static str; 4]; BLOCKS]) -> [u32; BLOCKS]
 {
     return [
         get_bit_shape(&shapes[0]),
@@ -75,7 +75,7 @@ const fn get_bit_shapes(shapes: &[[&'static str; 4]; BLOCKS]) -> [u32; 5]
     ];
 }
 
-const BIT_SHAPES: [u32; 5] = get_bit_shapes(&SHAPES);
+const BIT_SHAPES: [u32; BLOCKS] = get_bit_shapes(&SHAPES);
 
 fn main()
 {
@@ -88,29 +88,13 @@ fn main()
     }
     */
     println!("Day {}-1: Row height after 2022 blocks: {}", DAY_STR, part_a(&DATA));
-    println!("Day {}-2: CHANGE THIS: {}", DAY_STR, part_b(&DATA));
+    //println!("Day {}-2: Row height after 1 000 000 000 000 blocks: {}", DAY_STR, part_b(&DATA));
     println!("Day {} duration: {}us", DAY_STR, now.elapsed().as_micros() as f32 / RUN_AMOUNT as f32);
-}
-
-#[derive(Clone, PartialEq)]
-enum Command
-{
-    Left,
-    Right
 }
 
 fn check_collide(board: &Vec<u8>, block: u32, block_y: i64) -> bool
 {
-    if block_y < 0
-    {
-        return true;
-    }
     let coll: u32 = unsafe { *board.as_ptr().offset(block_y as isize ).cast::<u32>() };
-
-//    let coll: u32 = ((board[0 + block_y as usize] as u32) << 0u32)
-//        | ((board[1 + block_y as usize] as u32) << 8u32)
-//        | ((board[2 + block_y as usize] as u32) << 16u32)
-//        | ((board[3 + block_y as usize] as u32) << 24u32);
     return coll & block != 0;
 }
 
@@ -123,36 +107,21 @@ fn add_block(board: &mut Vec<u8>, block: u32, block_y: i64) -> i64
 
     unsafe
     {
-        let b64 = board.as_mut_ptr().offset((block_y & (!3)) as isize ).cast::<u64>();
-        let block64 = (block as u64) << ((block_y & 3) * 8);
-        *b64 |= block64;
+        let b32 = board.as_mut_ptr().offset(block_y as isize ).cast::<u32>();
+        *b32 |= block;
     }
-    /*
-    for i in 0..4
-    {
-        let index = (i + block_y) as usize;
-        board[index] |= ((block >> (i * 8)) & 255) as u8;
-    }
-    */
     let coll: u32 = unsafe { *board.as_ptr().offset(block_y as isize ).cast::<u32>() };
-/*
-    let coll: u32 = ((board[0 + block_y as usize] as u32) << 0u32)
-        | ((board[1 + block_y as usize] as u32) << 8u32)
-        | ((board[2 + block_y as usize] as u32) << 16u32)
-        | ((board[3 + block_y as usize] as u32) << 24u32);
-*/
+
     let height = (32 - coll.leading_zeros()) / 8;
     return block_y + height as i64 + 1;
 }
 
-fn move_block(board: &Vec<u8>, block: u32, block_y: i64, command: &Command) -> u32
+
+fn move_block(board: &Vec<u8>, block: u32, block_y: i64, command: i8) -> u32
 {
     // Lift block up one row, to not overflow with shifts.
-    let mut new_pos = match command
-    {
-        Command::Left => (block as u64) << 7,
-        Command::Right => (block as u64) << 9
-    };
+    let mut new_pos = (block as u64) << (8 + command);
+
     // Bottom row
     if new_pos & (255
         // Every 8th bit
@@ -172,16 +141,9 @@ fn move_block(board: &Vec<u8>, block: u32, block_y: i64, command: &Command) -> u
     return new_pos as u32;
 }
 
-fn move_block_no_check(block: u32, command: &Command) -> u32
+fn move_block_no_check(block: u32, command: i8) -> u32
 {
-    // Lift block up one row, to not overflow with shifts.
-    let mut new_pos = block;
-    new_pos = match command
-    {
-        Command::Left => new_pos >> 1,
-        Command::Right => new_pos << 1
-    };
-    return new_pos;
+    return block << command;
 }
 
 
@@ -226,14 +188,14 @@ fn _print_shapes()
     }
 }
 
-fn get_new_shape(precalculated: &Vec<Vec<u32>>, block_count: i64, command_count: usize, commands: &Vec<Command>) -> u32
+fn get_new_shape(precalculated: &Vec<Vec<u32>>, block_count: i64, command_count: usize) -> u32
 {
     let new_block
-        = precalculated[(block_count as usize) % BLOCKS][command_count % commands.len()];
+        = precalculated[(block_count as usize) % BLOCKS][command_count];
     return new_block;
 }
 
-fn get_precalculated_starts(commands: &Vec<Command>) -> Vec<Vec<u32>>
+fn get_precalculated_starts(commands: &Vec<i8>) -> Vec<Vec<u32>>
 {
     let mut result: Vec<Vec<u32>> = Vec::new();
     let tmp_board: Vec<u8> = vec![0u8, 0u8, 0u8, 0u8];
@@ -244,10 +206,10 @@ fn get_precalculated_starts(commands: &Vec<Command>) -> Vec<Vec<u32>>
         for j in 0..commands.len()
         {
             let mut block = BIT_SHAPES[i];
-            for k in 0..3
+            for k in 0..4
             {
                 let index = (j + k) % commands.len();
-                block = move_block(&tmp_board, block, 0, &commands[index]);
+                block = move_block(&tmp_board, block, 0, commands[index]);
             }
             v.push(block);
         }
@@ -257,21 +219,21 @@ fn get_precalculated_starts(commands: &Vec<Command>) -> Vec<Vec<u32>>
     return result;
 }
 
-fn parse_commands(content: &'static str) -> Vec<Command>
+fn parse_commands(content: &'static str) -> Vec<i8>
 {
-    let mut commands: Vec<Command> = Vec::new();
+    let mut commands: Vec<i8> = Vec::new();
     for &c in content.as_bytes()
     {
         match c
         {
-            60 => commands.push(Command::Left),
-            62 => commands.push(Command::Right),
+            60 => commands.push(-1),
+            62 => commands.push(1),
             _ => ()
         }
     }
     return commands;
 }
-
+/*
 fn calculate_move(state: u128, mut block: u128, block_index: usize, command: &Command)
 {
     if block & state != 0
@@ -291,8 +253,43 @@ fn calculate_moves(content: &'static str)
 }
 
 
+fn something(mut commands: u32) -> (usize, i64)
+{
+    let mut board: Vec<u8> = Vec::new();
+    board.resize(32, 0);
+    let mut height = 0;
+    let mut command_amount = 0;
 
-fn get_row_count(content: &'static str, block_count_to: i64, count_to_divisable: bool) -> (i64, i64)
+    for i in 0 .. BLOCKS
+    {
+        let mut block = BIT_SHAPES[i % BLOCKS];
+        let mut posy = height + 3;
+
+        while posy >= 0 && !check_collide(&board, block, posy)
+        {
+            block = match commands & 1
+            {
+                // Right
+                0 => move_block(&board, block, posy, &Command::Left),
+                1 => move_block(&board, block, posy, &Command::Right),
+                _ => block
+            };
+            command_amount += 1;
+            commands >>= 1;
+            //assert!(command_amount < 32);
+            posy -= 1;
+        }
+        if posy < 0 && (i % BLOCKS) != 0
+        {
+            return (0, 0);
+        }
+        height = std::cmp::max(height, add_block(&mut board, block, posy + 1));
+    }
+    return (command_amount, height);
+}
+
+*/
+fn get_row_count(content: &'static str, block_count_to: i64) -> (i64, i64)
 {
     let commands = parse_commands(content);
     println!("amount: {}", commands.len());
@@ -303,70 +300,64 @@ fn get_row_count(content: &'static str, block_count_to: i64, count_to_divisable:
     let mut thirty = 0;
 
     let mut board: Vec<u8> = Vec::new();
-    board.resize(1024 * 200, 0);
+    board.resize(1024 * 4, 0);
     let mut block_count = 0;
     let mut command_count = 0;
     let mut row_height = 0i64;
     let mut row_offset = 0i64;
-    while block_count == 0
-        || (!count_to_divisable && ((block_count % block_count_to)  != 0))
-        || ( count_to_divisable && (command_count % commands.len()) != 0)
+    while block_count < block_count_to
     {
-        let start = row_height + 3 - row_offset - 3;
+        let start = row_height + 3 - row_offset - 4;
         let mut block_y = start;
-        let mut new_block = get_new_shape(&precalculated, block_count, command_count, &commands);
+        let mut new_block = get_new_shape(&precalculated, block_count, command_count % commands.len());
         //let mut new_block = BIT_SHAPES[(block_count as usize) % BLOCKS];
         //new_block= move_block_no_check(new_block, &commands[(command_count + 0) % commands.len()]);
         //new_block= move_block_no_check(new_block, &commands[(command_count + 1) % commands.len()]);
-        command_count += 3;
-
+        command_count += 4;
         while block_y >= 0 && !check_collide(&board, new_block, block_y)
         {
-            new_block = move_block(&board, new_block, block_y, &commands[command_count % commands.len()]);
-
-            //let mut new_board = board.clone();
-            //add_block(&mut new_board, new_block, block_y);
-            //_print_board(&new_board, 12);
-            //println!("");
-
+            new_block = move_block(&board, new_block, block_y, commands[command_count % commands.len()]);
             block_y -= 1;
-
-            //new_board = board.clone();
-            //add_block(&mut new_board, new_block, block_y);
-            //_print_board(&new_board, 7);
-            //println!("");
-
             command_count += 1;
         }
-        let old_highest = row_height;
+
         row_height = std::cmp::max(row_height, add_block(&mut board, new_block, block_y + 1) + row_offset);
-
-        if row_height == old_highest + 1
-            && block_count as usize % BLOCKS == 0
-            && (new_block == 30 || new_block == 60)
-            && (board[old_highest as usize] & new_block as u8) == new_block as u8
-        {
-            thirty += 1;
-        }
-
         block_count += 1;
 
-        if row_height - row_offset > 100000
+        if row_height - row_offset > 4000
         {
-            board = board[50000..].to_vec();
-            board.resize(1024 * 200, 0);
-            row_offset += 50000;
+            unsafe
+            {
+                let mut b1 = board.as_mut_ptr().cast::<u64>();
+                let mut b2 = board.as_ptr().add(2000).cast::<u64>();
+
+                for i in 0..(board.len() - 2000) / 8
+                {
+                    *b1 = *b2;
+                    b1 = b1.add(1);
+                    b2 = b2.add(1);
+                }
+
+                for _ in 0..2000 / 8
+                {
+                    *b1 = 0;
+                    b1 = b1.add(1);
+                }
+            }
+            row_offset += 2000;
+        }
+
+        if row_height % 1000000 == 0
+        {
             println!("Blocks: {}", block_count);
         }
     }
     //println!("");
-    //println!("command: {} vs commands: {}, commands %: {}", command_count, commands.len(), command_count % commands.len());
+    println!("command: {} vs commands: {}, commands %: {}", command_count, commands.len(), command_count % commands.len());
     //_print_board(&board,0, 16);
     //_print_board(&board, (row_height - row_offset) as usize - 15, 16);
     //println!("rowoffset: {}", row_offset);
-    _print_line(30);
-    _print_line(60);
-    println!("thirty {}", thirty);
+    //println!("thirty {}", thirty);
     println!("Rowheight: {}", row_height);
     return (row_height, block_count);
 }
@@ -380,7 +371,7 @@ fn part_a_test()
 
 fn part_a(content: &'static str) -> i64
 {
-    return get_row_count(content, 2022, false).0;
+    return get_row_count(content, 2022).0;
 }
 
 #[test]
@@ -392,18 +383,7 @@ fn part_b_test()
 
 fn part_b(content: &'static str) -> i64
 {
-    let blocks = 1_000_000_000_000;
+    return get_row_count(content, 1_000_000_000i64).0;
 
-    let commands = parse_commands(content);
-    let loop_row_amount = (commands.len() * 5) as i64;
-
-    let (rows_from_loop, loop_row_amount) = get_row_count(content, loop_row_amount, false);
-
-    let loop_amount = blocks / loop_row_amount;
-    let reminder = blocks % loop_row_amount;
-    let row_count = rows_from_loop * loop_amount
-        + get_row_count(content, reminder, false).0;
-
-    return row_count;
 }
 

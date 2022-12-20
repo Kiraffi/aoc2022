@@ -198,10 +198,15 @@ fn solve_recursive(blueprint: &Blueprint, mut state: State, max_time: i64, curre
     collect(&mut state, build_turns);
 
     build(blueprint, &mut state);
-
-    let mut max_score = state.geode + (max_time - state.time) * state.geode_robots;
+    let time_left = max_time - state.time;
+    let mut max_score = state.geode + time_left * state.geode_robots;
     *current_best = std::cmp::max(max_score, *current_best);
-    if !can_build_geode(blueprint, &state, max_time - state.time, *current_best)
+    let potential = max_score + (time_left * (time_left - 1));
+    if potential < *current_best
+    {
+        return max_score;
+    }
+    if !can_build_geode(blueprint, &state, time_left, *current_best)
     {
         return max_score;
     }
@@ -215,7 +220,7 @@ fn solve_recursive(blueprint: &Blueprint, mut state: State, max_time: i64, curre
         new_state.build = Build::Geode;
         max_score = std::cmp::max(max_score, solve_recursive(blueprint, new_state, max_time, current_best));
     }
-    if state.clay_robots > 1
+    if state.clay_robots > 1 && state.obsidian_robots < blueprint.geode_robot.1
     {
         let mut new_state = state.clone();
         new_state.index += 1;
@@ -223,13 +228,14 @@ fn solve_recursive(blueprint: &Blueprint, mut state: State, max_time: i64, curre
         max_score = std::cmp::max(max_score, solve_recursive(blueprint, new_state, max_time, current_best));
     }
 
+    if state.clay_robots < blueprint.obsidian_robot.1
     {
         let mut new_state = state.clone();
         new_state.index += 1;
         new_state.build = Build::Clay;
         max_score = std::cmp::max(max_score, solve_recursive(blueprint, new_state, max_time, current_best));
     }
-
+    if state.ore_robots < blueprint.geode_robot.0 + blueprint.obsidian_robot.0 + blueprint.clay_robot
     {
         let mut new_state = state.clone();
         new_state.index += 1;
@@ -243,7 +249,7 @@ fn solve_recursive(blueprint: &Blueprint, mut state: State, max_time: i64, curre
 fn part_a_test()
 {
     let value = part_a(&_TEST_DATA);
-    assert_eq!(value, 0);
+    assert_eq!(value, 33);
 }
 
 fn parse_blueprints(content: &'static str) -> Vec<Blueprint>
@@ -288,7 +294,7 @@ fn part_a(content: &'static str) -> i64
 fn part_b_test()
 {
     let value = part_b(&_TEST_DATA);
-    assert_eq!(value, 0);
+    assert_eq!(value, 62);
 }
 
 fn part_b(content: &'static str) -> i64

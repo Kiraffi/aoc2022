@@ -1,55 +1,30 @@
-Valve NA has flow rate=0; tunnels lead to valves MU, PH
-Valve NW has flow rate=0; tunnels lead to valves KB, MH
-Valve MR has flow rate=0; tunnels lead to valves GC, FI
-Valve XD has flow rate=0; tunnels lead to valves UN, CN
-Valve HK has flow rate=0; tunnels lead to valves AA, IF
-Valve JL has flow rate=0; tunnels lead to valves IF, WB
-Valve RQ has flow rate=13; tunnels lead to valves BL, DJ
-Valve AB has flow rate=0; tunnels lead to valves BO, RU
-Valve PE has flow rate=0; tunnels lead to valves AZ, IF
-Valve QF has flow rate=0; tunnels lead to valves TD, AZ
-Valve BA has flow rate=0; tunnels lead to valves RF, GU
-Valve SY has flow rate=0; tunnels lead to valves MH, MU
-Valve NT has flow rate=0; tunnels lead to valves DJ, UN
-Valve GU has flow rate=21; tunnels lead to valves VJ, BA, YP
-Valve AZ has flow rate=12; tunnels lead to valves QF, PI, AS, PE
-Valve WQ has flow rate=23; tunnels lead to valves VJ, UM, CN
-Valve DR has flow rate=0; tunnels lead to valves GA, CQ
-Valve UM has flow rate=0; tunnels lead to valves IE, WQ
-Valve XI has flow rate=0; tunnels lead to valves IE, IF
-Valve SS has flow rate=0; tunnels lead to valves CQ, MH
-Valve IE has flow rate=22; tunnels lead to valves YP, UM, XI, XA
-Valve BT has flow rate=24; tunnels lead to valves KB, BL, GA
-Valve GA has flow rate=0; tunnels lead to valves DR, BT
-Valve AR has flow rate=0; tunnels lead to valves IF, FI
-Valve DJ has flow rate=0; tunnels lead to valves RQ, NT
-Valve PI has flow rate=0; tunnels lead to valves FI, AZ
-Valve WB has flow rate=0; tunnels lead to valves TD, JL
-Valve OQ has flow rate=0; tunnels lead to valves ME, TD
-Valve RU has flow rate=19; tunnel leads to valve AB
-Valve IF has flow rate=7; tunnels lead to valves AR, JL, HK, PE, XI
-Valve BO has flow rate=0; tunnels lead to valves ME, AB
-Valve CN has flow rate=0; tunnels lead to valves WQ, XD
-Valve HH has flow rate=0; tunnels lead to valves AA, FS
-Valve AS has flow rate=0; tunnels lead to valves AA, AZ
-Valve FS has flow rate=0; tunnels lead to valves HH, MH
-Valve PQ has flow rate=0; tunnels lead to valves TD, AA
-Valve AA has flow rate=0; tunnels lead to valves HH, CO, AS, HK, PQ
-Valve ME has flow rate=18; tunnels lead to valves OQ, BO, PH
-Valve RF has flow rate=0; tunnels lead to valves UN, BA
-Valve MH has flow rate=8; tunnels lead to valves FS, NW, SS, SY
-Valve YP has flow rate=0; tunnels lead to valves IE, GU
-Valve FI has flow rate=11; tunnels lead to valves PI, MR, AR, CO, DI
-Valve UU has flow rate=0; tunnels lead to valves CQ, MU
-Valve CO has flow rate=0; tunnels lead to valves AA, FI
-Valve TD has flow rate=16; tunnels lead to valves QF, GC, OQ, WB, PQ
-Valve MU has flow rate=15; tunnels lead to valves SY, UU, NA
-Valve BL has flow rate=0; tunnels lead to valves BT, RQ
-Valve PH has flow rate=0; tunnels lead to valves ME, NA
-Valve XA has flow rate=0; tunnels lead to valves IE, DI
-Valve GC has flow rate=0; tunnels lead to valves TD, MR
-Valve KB has flow rate=0; tunnels lead to valves BT, NW
-Valve DI has flow rate=0; tunnels lead to valves XA, FI
-Valve CQ has flow rate=9; tunnels lead to valves UU, DR, SS
-Valve VJ has flow rate=0; tunnels lead to valves WQ, GU
-Valve UN has flow rate=20; tunnels lead to valves NT, XD, RF
+Blueprint 1: Each ore robot costs 4 ore. Each clay robot costs 4 ore. Each obsidian robot costs 3 ore and 9 clay. Each geode robot costs 3 ore and 7 obsidian.
+Blueprint 2: Each ore robot costs 4 ore. Each clay robot costs 4 ore. Each obsidian robot costs 2 ore and 16 clay. Each geode robot costs 4 ore and 16 obsidian.
+Blueprint 3: Each ore robot costs 4 ore. Each clay robot costs 4 ore. Each obsidian robot costs 2 ore and 14 clay. Each geode robot costs 4 ore and 15 obsidian.
+Blueprint 4: Each ore robot costs 2 ore. Each clay robot costs 2 ore. Each obsidian robot costs 2 ore and 20 clay. Each geode robot costs 2 ore and 14 obsidian.
+Blueprint 5: Each ore robot costs 3 ore. Each clay robot costs 4 ore. Each obsidian robot costs 4 ore and 5 clay. Each geode robot costs 4 ore and 8 obsidian.
+Blueprint 6: Each ore robot costs 4 ore. Each clay robot costs 4 ore. Each obsidian robot costs 4 ore and 18 clay. Each geode robot costs 4 ore and 9 obsidian.
+Blueprint 7: Each ore robot costs 3 ore. Each clay robot costs 4 ore. Each obsidian robot costs 4 ore and 17 clay. Each geode robot costs 4 ore and 16 obsidian.
+Blueprint 8: Each ore robot costs 3 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 6 clay. Each geode robot costs 2 ore and 16 obsidian.
+Blueprint 9: Each ore robot costs 3 ore. Each clay robot costs 4 ore. Each obsidian robot costs 2 ore and 19 clay. Each geode robot costs 2 ore and 12 obsidian.
+Blueprint 10: Each ore robot costs 2 ore. Each clay robot costs 4 ore. Each obsidian robot costs 3 ore and 20 clay. Each geode robot costs 2 ore and 17 obsidian.
+Blueprint 11: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsidian robot costs 2 ore and 17 clay. Each geode robot costs 3 ore and 19 obsidian.
+Blueprint 12: Each ore robot costs 2 ore. Each clay robot costs 4 ore. Each obsidian robot costs 4 ore and 11 clay. Each geode robot costs 3 ore and 8 obsidian.
+Blueprint 13: Each ore robot costs 2 ore. Each clay robot costs 4 ore. Each obsidian robot costs 4 ore and 20 clay. Each geode robot costs 4 ore and 18 obsidian.
+Blueprint 14: Each ore robot costs 3 ore. Each clay robot costs 4 ore. Each obsidian robot costs 3 ore and 12 clay. Each geode robot costs 3 ore and 17 obsidian.
+Blueprint 15: Each ore robot costs 2 ore. Each clay robot costs 4 ore. Each obsidian robot costs 4 ore and 19 clay. Each geode robot costs 2 ore and 18 obsidian.
+Blueprint 16: Each ore robot costs 3 ore. Each clay robot costs 3 ore. Each obsidian robot costs 2 ore and 19 clay. Each geode robot costs 2 ore and 12 obsidian.
+Blueprint 17: Each ore robot costs 4 ore. Each clay robot costs 3 ore. Each obsidian robot costs 4 ore and 18 clay. Each geode robot costs 4 ore and 11 obsidian.
+Blueprint 18: Each ore robot costs 2 ore. Each clay robot costs 2 ore. Each obsidian robot costs 2 ore and 15 clay. Each geode robot costs 2 ore and 7 obsidian.
+Blueprint 19: Each ore robot costs 4 ore. Each clay robot costs 4 ore. Each obsidian robot costs 3 ore and 5 clay. Each geode robot costs 3 ore and 18 obsidian.
+Blueprint 20: Each ore robot costs 4 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 10 clay. Each geode robot costs 3 ore and 10 obsidian.
+Blueprint 21: Each ore robot costs 4 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 7 clay. Each geode robot costs 3 ore and 9 obsidian.
+Blueprint 22: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 9 clay. Each geode robot costs 3 ore and 9 obsidian.
+Blueprint 23: Each ore robot costs 3 ore. Each clay robot costs 4 ore. Each obsidian robot costs 3 ore and 10 clay. Each geode robot costs 2 ore and 7 obsidian.
+Blueprint 24: Each ore robot costs 3 ore. Each clay robot costs 4 ore. Each obsidian robot costs 4 ore and 18 clay. Each geode robot costs 3 ore and 8 obsidian.
+Blueprint 25: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 8 clay. Each geode robot costs 3 ore and 20 obsidian.
+Blueprint 26: Each ore robot costs 4 ore. Each clay robot costs 3 ore. Each obsidian robot costs 4 ore and 20 clay. Each geode robot costs 2 ore and 15 obsidian.
+Blueprint 27: Each ore robot costs 3 ore. Each clay robot costs 4 ore. Each obsidian robot costs 4 ore and 18 clay. Each geode robot costs 2 ore and 11 obsidian.
+Blueprint 28: Each ore robot costs 3 ore. Each clay robot costs 4 ore. Each obsidian robot costs 2 ore and 20 clay. Each geode robot costs 4 ore and 7 obsidian.
+Blueprint 29: Each ore robot costs 3 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 11 clay. Each geode robot costs 2 ore and 8 obsidian.
+Blueprint 30: Each ore robot costs 4 ore. Each clay robot costs 3 ore. Each obsidian robot costs 4 ore and 15 clay. Each geode robot costs 3 ore and 12 obsidian.

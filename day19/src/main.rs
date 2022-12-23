@@ -24,7 +24,8 @@ struct Blueprint
     ore_robot: i64,
     clay_robot: i64,
     obsidian_robot: (i64, i64),
-    geode_robot: (i64, i64)
+    geode_robot: (i64, i64),
+    max_ore_needed: i64
 }
 
 #[derive(Clone)]
@@ -80,19 +81,19 @@ fn build_turn_needed(blueprint: &Blueprint, state: &State) -> i64
     return match state.build
     {
         Build::Ore => {
-            (blueprint.ore_robot - state.ore + state.ore_robots - 1) / state.ore_robots
+            round_up_div(blueprint.ore_robot - state.ore, state.ore_robots)
         },
         Build::Clay => {
-            (blueprint.clay_robot - state.ore + state.ore_robots - 1) / state.ore_robots
+            round_up_div(blueprint.clay_robot - state.ore, state.ore_robots)
         },
         Build::Obsidian => {
-            let ore_turns = (blueprint.obsidian_robot.0 - state.ore + state.ore_robots - 1) / state.ore_robots;
-            let clay_turns = (blueprint.obsidian_robot.1 - state.clay + state.clay_robots - 1) / state.clay_robots;
+            let ore_turns = round_up_div(blueprint.obsidian_robot.0 - state.ore, state.ore_robots);
+            let clay_turns = round_up_div(blueprint.obsidian_robot.1 - state.clay, state.clay_robots);
             std::cmp::max(ore_turns, clay_turns)
         },
         Build::Geode => {
-            let ore_turns = (blueprint.geode_robot.0 - state.ore + state.ore_robots - 1) / state.ore_robots;
-            let obsidian_turns = (blueprint.geode_robot.1 - state.obsidian + state.obsidian_robots - 1) / state.obsidian_robots;
+            let ore_turns = round_up_div(blueprint.geode_robot.0 - state.ore, state.ore_robots);
+            let obsidian_turns = round_up_div(blueprint.geode_robot.1 - state.obsidian, state.obsidian_robots);
             std::cmp::max(ore_turns, obsidian_turns)
         },
         Build::None => 0
@@ -109,7 +110,6 @@ fn build(blueprint: &Blueprint, state: &mut State)
         Build::Geode => { state.geode_robots += 1; state.ore -= blueprint.geode_robot.0; state.obsidian -= blueprint.geode_robot.1; },
         Build::None => ()
     }
-
 }
 
 fn round_up_div(value: i64, divider: i64) -> i64
@@ -125,88 +125,23 @@ fn collect(state: &mut State, turns: i64)
     state.geode += state.geode_robots * turns;
 }
 
-fn can_build_geode(blueprint: &Blueprint, state: &State, time_left: i64, current_best: i64) -> bool
-{
-    if time_left <= 1
-    {
-        return false;
-    }
-    let geode_needed = current_best - state.geode - state.geode_robots * time_left;
-    let geode_robots_needed = std::cmp::max(1, round_up_div(geode_needed, time_left));
-
-    let obsidian_needed = geode_robots_needed * blueprint.geode_robot.1 - state.obsidian;
-    if obsidian_needed <= 0
-    {
-        return true;
-    }
-    let mut obsidian_robots_needed = round_up_div(obsidian_needed, time_left);
-    obsidian_robots_needed -= state.obsidian_robots;
-
-    if obsidian_robots_needed <= 0
-    {
-        return true;
-    }
-    let clay_needed = obsidian_robots_needed * blueprint.obsidian_robot.1 - state.clay;
-    if clay_needed <= 0
-    {
-        return true;
-    }
-
-    let mut clay_robots_needed = round_up_div(clay_needed, time_left);
-    clay_robots_needed -= state.clay_robots;
-    if clay_robots_needed <= 0
-    {
-        return true;
-    }
-
-    let mut ore_needed = clay_robots_needed * blueprint.clay_robot - state.ore;
-    ore_needed += obsidian_robots_needed * blueprint.obsidian_robot.0;
-    ore_needed += blueprint.geode_robot.0;
-
-    if ore_needed <= 0
-    {
-        return true;
-    }
-
-    let mut ore_robots_needed = round_up_div(ore_needed, time_left);
-    ore_robots_needed -= state.ore_robots;
-    if ore_robots_needed <= 0
-    {
-        return true;
-    }
-    if time_left < ore_robots_needed + clay_robots_needed + obsidian_robots_needed + geode_robots_needed
-    {
-        return false;
-    }
-
-    let mut total_ore_needed = ore_robots_needed * blueprint.ore_robot + ore_needed;
-    while ore_robots_needed * time_left < total_ore_needed
-    {
-        ore_robots_needed += 1;
-        total_ore_needed += blueprint.ore_robot;
-    }
-    return time_left >= ore_robots_needed + clay_robots_needed + obsidian_robots_needed + geode_robots_needed;
-}
-
-fn solve_recursive(blueprint: &Blueprint, mut state: State, max_time: i64, current_best: &mut i64) -> i64
+fn solve_recursive(blueprint: &Blueprint, mut state: State, max_time: i64, current_best: &mut Vec<i64>) -> i64
 {
     let build_turns = std::cmp::max(1, build_turn_needed(blueprint, &state) + 1);
     if state.time + build_turns >= max_time
     {
-        return state.geode + (max_time - state.time) * state.geode_robots;
-    }
-    collect(&mut state, build_turns);
-
-    build(blueprint, &mut state);
-    let time_left = max_time - state.time;
-    let mut max_score = state.geode + time_left * state.geode_robots;
-    *current_best = std::cmp::max(max_score, *current_best);
-    let potential = max_score + (time_left * (time_left - 1));
-    if potential < *current_best
-    {
+        let max_score = state.geode + (max_time - state.time) * state.geode_robots;
+        current_best[(max_time - 1) as usize] = std::cmp::max(max_score, current_best[(max_time - 1) as usize]);
         return max_score;
     }
-    if !can_build_geode(blueprint, &state, time_left, *current_best)
+    collect(&mut state, build_turns);
+    build(blueprint, &mut state);
+
+    let time_left = max_time - state.time;
+    let mut max_score = state.geode + time_left * state.geode_robots;
+    let potential = (time_left + 1 - 1) * (time_left + 0 - 1) / 2;
+
+    if potential + max_score < current_best[state.time as usize]
     {
         return max_score;
     }
@@ -235,13 +170,15 @@ fn solve_recursive(blueprint: &Blueprint, mut state: State, max_time: i64, curre
         new_state.build = Build::Clay;
         max_score = std::cmp::max(max_score, solve_recursive(blueprint, new_state, max_time, current_best));
     }
-    if state.ore_robots < blueprint.geode_robot.0 + blueprint.obsidian_robot.0 + blueprint.clay_robot
+    if state.ore_robots < blueprint.max_ore_needed
     {
         let mut new_state = state.clone();
         new_state.index += 1;
         new_state.build = Build::Ore;
         max_score = std::cmp::max(max_score, solve_recursive(blueprint, new_state, max_time, current_best));
     }
+    current_best[state.time as usize] = std::cmp::max(max_score, current_best[state.time as usize]);
+
     return max_score;
 }
 
@@ -271,7 +208,8 @@ fn parse_blueprints(content: &'static str) -> Vec<Blueprint>
             ore_robot: numbers[1],
             clay_robot: numbers[2],
             obsidian_robot: (numbers[3], numbers[4]),
-            geode_robot: (numbers[5], numbers[6]) });
+            geode_robot: (numbers[5], numbers[6]),
+            max_ore_needed: std::cmp::max(std::cmp::max(numbers[5], numbers[3]), numbers[2]) });
     }
     return blueprints;
 }
@@ -282,7 +220,7 @@ fn part_a(content: &'static str) -> i64
     let mut qualities = 0;
     for i in 0..blueprints.len()
     {
-        let mut curr_best = 0;
+        let mut curr_best = vec![0; 24];
         let amount = solve_recursive(&blueprints[i], State::new(), 24, &mut curr_best);
         qualities += amount * (i + 1) as i64;
     }
@@ -294,16 +232,16 @@ fn part_a(content: &'static str) -> i64
 fn part_b_test()
 {
     let value = part_b(&_TEST_DATA);
-    assert_eq!(value, 62);
+    assert_eq!(value, 56 * 62);
 }
 
 fn part_b(content: &'static str) -> i64
 {
     let blueprints = parse_blueprints(content);
     let mut geodes = 1;
-    for i in 0..3
+    for i in 0..std::cmp::min(3, blueprints.len())
     {
-        let mut curr_best = 0;
+        let mut curr_best = vec![0; 32];
         let amount = solve_recursive(&blueprints[i], State::new(), 32, &mut curr_best);
         geodes *= amount;
     }

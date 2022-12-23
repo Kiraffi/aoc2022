@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 
 const RUN_AMOUNT:u32 = 1;
 const DAY_STR: &'static str = "17";
@@ -237,10 +239,9 @@ fn parse_commands(content: &'static str) -> Vec<i8>
     return commands;
 }
 
-fn get_row_count(content: &'static str, block_count_to: i64) -> (i64, i64)
+fn get_row_count(content: &'static str, block_count_to: i64) -> i64
 {
     let commands = parse_commands(content);
-    println!("amount: {}", commands.len());
 
     let precalculated = get_precalculated_starts(&commands);
     //_print_shapes();
@@ -252,9 +253,49 @@ fn get_row_count(content: &'static str, block_count_to: i64) -> (i64, i64)
     let mut command_count = 0;
     let mut row_height = 1i64;
     let mut row_offset = 0i64;
+    let mut seen: HashMap<u64, (i64, i64)> = HashMap::new();
 
     while block_count < block_count_to
     {
+
+        let solid = if row_height > 4
+        {
+            board[(row_height - 1 - row_offset) as usize]
+            | board[(row_height - 2 - row_offset) as usize]
+            | board[(row_height - 3 - row_offset) as usize]
+            | board[(row_height - 4 - row_offset) as usize]
+        }
+        else { 0 };
+
+        if solid & 127 == 127
+        {
+            let bl =
+            unsafe { *board.as_ptr().add((row_height - 4 - row_offset) as usize).cast::<u32>() };
+
+            let hash_value = bl as u64
+            + ((block_count % BLOCKS as i64) << 32) as u64
+            + ((command_count % commands.len()) as u64) << 40;
+
+            if seen.contains_key(&hash_value)
+            {
+                let last_row = seen[&hash_value];
+                let diff_blocks = block_count - last_row.1;
+                let diff_height = row_height - last_row.0;
+                let multiplier = (block_count_to - block_count) / diff_blocks;
+                block_count += multiplier * diff_blocks;
+                row_height += multiplier * diff_height;
+                *seen.get_mut(&hash_value).unwrap() = (row_height, block_count);
+                if block_count >= block_count_to
+                {
+                    break;
+                }
+                row_offset += multiplier * diff_height;
+            }
+            else
+            {
+                seen.insert(hash_value, (row_height, block_count));
+            }
+        }
         let mut block_y = row_height + 3 - row_offset - 4;
         let mut new_block = get_new_shape(&precalculated, block_count, command_count % commands.len());
         command_count += 4;
@@ -304,7 +345,7 @@ fn get_row_count(content: &'static str, block_count_to: i64) -> (i64, i64)
     //println!("rowoffset: {}", row_offset);
     //println!("thirty {}", thirty);
     //println!("Rowheight: {}", row_height - 1);
-    return (row_height - 1, block_count);
+    return row_height - 1
 }
 
 #[test]
@@ -316,7 +357,7 @@ fn part_a_test()
 
 fn part_a(content: &'static str) -> i64
 {
-    return get_row_count(content, 2022).0;
+    return get_row_count(content, 2022);
 }
 
 #[test]
@@ -328,9 +369,7 @@ fn part_b_test()
 
 fn part_b(content: &'static str) -> i64
 {
-    //return get_row_count(content, 1_000_000_000i64).0;
-    return get_row_count(content, 1000000000000i64).0;
-    //return get_row_count(content, 1_000_000_000_000i64).0;
+    return get_row_count(content, 1000000000000i64);
 
 }
 

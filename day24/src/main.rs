@@ -19,7 +19,7 @@ fn main()
     println!("Day {} duration: {}us", DAY_STR, now.elapsed().as_micros() as f32 / RUN_AMOUNT as f32);
 }
 
-struct Blizzard
+pub struct Blizzard
 {
     x: i8,
     y: i8,
@@ -41,18 +41,19 @@ fn _print_map(map: &Vec<Vec<char>>)
 }
 
 #[derive(Copy, Clone, Eq, Hash, PartialEq)]
-struct Stamp
+pub struct Stamp
 {
     x: i8,
     y: i8
 }
 
-fn try_add(stamp: &Stamp, map: &Vec<u128>, seen: &mut Vec<u128>, posses: &mut Vec<Stamp>, map_size: (i8, i8))
+pub fn try_add(stamp: &Stamp, map: &mut Vec<u128>, posses: &mut Vec<Stamp>, map_size: (i8, i8))
 {
-    if stamp.x < 0
-        || stamp.y < 0
-        || stamp.x >= map_size.0
-        || stamp.y >= map_size.1
+    let mut less = stamp.x < 0i8;
+    less |= stamp.y < 0i8;
+    less |= stamp.x >= map_size.0;
+    less |= stamp.y >= map_size.1;
+    if less
     {
         return;
     }
@@ -60,16 +61,11 @@ fn try_add(stamp: &Stamp, map: &Vec<u128>, seen: &mut Vec<u128>, posses: &mut Ve
     {
         return;
     }
-    if ((seen[stamp.y as usize] >> stamp.x) & 1) != 0
-    {
-        return;
-    }
-    seen[stamp.y as usize] |= 1 << stamp.x;
-    //seen.insert(*stamp);
+    map[stamp.y as usize] |= 1 << stamp.x;
     posses.push(*stamp);
 }
 
-fn simulate_step(
+pub fn simulate_step(
     blizzards: &Vec<Blizzard>,
     map: &Vec<u128>,
     new_map: &mut Vec<u128>,
@@ -100,7 +96,7 @@ fn simulate_step(
     }
 }
 
-fn simulate(
+pub fn simulate(
     start: (i8, i8),
     end: (i8, i8),
     map_size: (i8, i8),
@@ -114,14 +110,10 @@ fn simulate(
     posses.push(Stamp{x: start.0, y: start.1});
     let mut time = start_time;
     let mut new_map: Vec<u128> = map.clone();
-    let mut seen: Vec<u128> = Vec::new();
-
 
     while posses.len() > 0
     {
         simulate_step(blizzards, map, &mut new_map, map_size, time + 1);
-        seen.clear();
-        seen.resize(map.len(), 0);
 
         //new_map[pos.1 as usize][pos.0 as usize] = '@';
         //println!("Time: {}", time);
@@ -138,11 +130,11 @@ fn simulate(
                 return time;
             }
 
-            try_add(&Stamp{x: stamp.x + 0, y: stamp.y + 0}, &new_map, &mut seen, &mut new_posses, map_size);
-            try_add(&Stamp{x: stamp.x + 1, y: stamp.y + 0}, &new_map, &mut seen, &mut new_posses, map_size);
-            try_add(&Stamp{x: stamp.x - 1, y: stamp.y + 0}, &new_map, &mut seen, &mut new_posses, map_size);
-            try_add(&Stamp{x: stamp.x + 0, y: stamp.y + 1}, &new_map, &mut seen, &mut new_posses, map_size);
-            try_add(&Stamp{x: stamp.x + 0, y: stamp.y - 1}, &new_map, &mut seen, &mut new_posses, map_size);
+            try_add(&Stamp{x: stamp.x + 0, y: stamp.y + 0}, &mut new_map, &mut new_posses, map_size);
+            try_add(&Stamp{x: stamp.x + 1, y: stamp.y + 0}, &mut new_map, &mut new_posses, map_size);
+            try_add(&Stamp{x: stamp.x - 1, y: stamp.y + 0}, &mut new_map, &mut new_posses, map_size);
+            try_add(&Stamp{x: stamp.x + 0, y: stamp.y + 1}, &mut new_map, &mut new_posses, map_size);
+            try_add(&Stamp{x: stamp.x + 0, y: stamp.y - 1}, &mut new_map, &mut new_posses, map_size);
         }
         //_print_map(&new_map_tmp);
         seen.clear();

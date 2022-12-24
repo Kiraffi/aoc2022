@@ -48,30 +48,11 @@ pub struct Stamp
     y: i8
 }
 
-pub fn try_add(stamp: &Stamp, map: &mut Vec<u128>, posses: &mut Vec<Stamp>, map_size: (i8, i8))
-{
-    let mut less = stamp.x < 0i8;
-    less |= stamp.y < 0i8;
-    less |= stamp.x >= map_size.0;
-    less |= stamp.y >= map_size.1;
-    if less
-    {
-        return;
-    }
-    if ((map[stamp.y as usize] >> stamp.x) & 1) != 0
-    {
-        return;
-    }
-    map[stamp.y as usize] |= 1 << stamp.x;
-    posses.push(*stamp);
-}
-
 pub fn simulate_step(
     blizzards: &mut Blizzard,
     map: &Vec<u128>,
-    new_map: &mut Vec<u128>,
     map_size: (i8, i8),
-    _time: u16)
+    _time: u16) -> Vec<u128>
 {
     let rows = (map_size.1 - 1) as usize;
     let cols = (map_size.0 - 1) as usize;
@@ -96,14 +77,16 @@ pub fn simulate_step(
     blizzards.down[1] = blizzards.down[rows];
     blizzards.up[rows - 1] = blizzards.up[0];
 
+    let mut new_map: Vec<u128> = map.clone();
+
     for i in 0..map.len()
     {
-        new_map[i] = map[i];
         new_map[i] |= blizzards.left[i];
         new_map[i] |= blizzards.right[i];
         new_map[i] |= blizzards.up[i];
         new_map[i] |= blizzards.down[i];
     }
+    return new_map;
 }
 
 pub fn simulate(
@@ -114,42 +97,36 @@ pub fn simulate(
     blizzards: &mut Blizzard,
     map: &Vec<u128>) -> u16
 {
-    let mut posses: Vec<Stamp> = Vec::new();
-    let mut new_posses: Vec<Stamp> = Vec::new();
+    let mut posses: Vec<u128> = Vec::new();
+    posses.resize(map_size.1 as usize, 0);
+    posses[start.1 as usize] |= 1 << start.0;
 
-    posses.push(Stamp{x: start.0, y: start.1});
     let mut time = start_time;
-    let mut new_map: Vec<u128> = map.clone();
 
-    while posses.len() > 0
+    while ((posses[end.1 as usize] >> end.0) & 1) == 0
     {
-        simulate_step(blizzards, map, &mut new_map, map_size, time + 1);
+        let new_map = simulate_step(blizzards, map, map_size, time + 1);
+        let mut new_posses = posses.clone();
 
+        for i in 0..map.len() - 1
+        {
+            new_posses[i] |= posses[i + 1];
+            new_posses[i + 1] |= posses[i];
+            new_posses[i] |= posses[i] << 1;
+            new_posses[i] |= posses[i] >> 1;
+        }
+        for i in 0..map.len() - 1
+        {
+            new_posses[i] &= !new_map[i];
+        }
         //new_map[pos.1 as usize][pos.0 as usize] = '@';
         //println!("Time: {}", time);
         //_print_map(&new_map);
         //let mut new_map_tmp = new_map.clone();
-
-        while posses.len() > 0
-        {
-            let stamp = posses.pop().unwrap();
-            //println!{"{}, {}", stamp.x, stamp.y};
-            //new_map_tmp[stamp.y as usize][stamp.x as usize] = '@';
-            if stamp.x == end.0 && stamp.y == end.1
-            {
-                return time;
-            }
-
-            try_add(&Stamp{x: stamp.x + 0, y: stamp.y + 0}, &mut new_map, &mut new_posses, map_size);
-            try_add(&Stamp{x: stamp.x + 1, y: stamp.y + 0}, &mut new_map, &mut new_posses, map_size);
-            try_add(&Stamp{x: stamp.x - 1, y: stamp.y + 0}, &mut new_map, &mut new_posses, map_size);
-            try_add(&Stamp{x: stamp.x + 0, y: stamp.y + 1}, &mut new_map, &mut new_posses, map_size);
-            try_add(&Stamp{x: stamp.x + 0, y: stamp.y - 1}, &mut new_map, &mut new_posses, map_size);
-        }
-        std::mem::swap(&mut posses, &mut new_posses);
+        posses = new_posses;
         time += 1;
     }
-    return !0;
+    return time;
 }
 
 fn parse(content: &'static str) -> (Blizzard, (i8, i8), (i8, i8), (i8, i8), Vec<u128>)
@@ -224,8 +201,8 @@ fn part_b(content: &'static str) -> i64
     let (mut blizzards, start, end, map_size, map) = parse(content);
 
     let fastest = simulate(start, end, map_size, 0, &mut blizzards, &map);
-    let fastest = simulate(end, start, map_size, fastest + 1, &mut blizzards, &map);
-    let fastest = simulate(start, end, map_size, fastest + 1, &mut blizzards, &map);
+    let fastest = simulate(end, start, map_size, fastest, &mut blizzards, &map);
+    let fastest = simulate(start, end, map_size, fastest, &mut blizzards, &map);
     return fastest as i64;
 }
 

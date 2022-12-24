@@ -42,33 +42,40 @@ fn _print_map(map: &Vec<Vec<char>>)
     println!("");
 }
 
-fn simulate(start: (u8, u8), start_time: u32, blizzards: &Vec<Blizzard>, end: (u8, u8), map: &Vec<Vec<char>>) -> u32
+#[derive(Copy, Clone, Eq, Hash, PartialEq)]
+struct Stamp
 {
-    let mut posses: VecDeque<(u8, u8, u32)> = VecDeque::new();
-    let mut seen: HashSet<(u8, u8, u32)> = HashSet::new();
+    time: u16,
+    x: u8,
+    y: u8
+}
+
+fn simulate(start: (u8, u8), start_time: u16, blizzards: &Vec<Blizzard>, end: (u8, u8), map: &Vec<Vec<char>>) -> u16
+{
+    let mut posses: VecDeque<Stamp> = VecDeque::new();
+    let mut seen: HashSet<Stamp> = HashSet::new();
     let map_size = (map[0].len() as u8, map.len() as u8);
-    posses.push_back((start.0, start.1, start_time));
+    posses.push_back(Stamp{time: start_time, x: start.0, y: start.1});
     'outer: while posses.len() > 0
     {
-        let pos = posses.pop_front().unwrap();
-        if pos.0 >= map_size.0 || pos.1 >= map_size.1
+        let stamp = posses.pop_front().unwrap();
+        if stamp.x >= map_size.0 || stamp.y >= map_size.1
         {
             continue;
         }
-        if map[pos.1 as usize][pos.0 as usize] == '#'
+        if map[stamp.y as usize][stamp.x as usize] == '#'
         {
             continue;
         }
-        if seen.contains(&pos)
+        if seen.contains(&stamp)
         {
             continue;
         }
-        seen.insert(pos);
-        let time = pos.2;
+        seen.insert(stamp);
 
-        if pos.0 == end.0 && pos.1 == end.1
+        if stamp.x == end.0 && stamp.y == end.1
         {
-            return time;
+            return stamp.time;
         }
         //let mut new_map = map.clone();
         for b in blizzards
@@ -77,16 +84,16 @@ fn simulate(start: (u8, u8), start_time: u32, blizzards: &Vec<Blizzard>, end: (u
             let mut y = b.y as i64;
             let _c = match b.dir
             {
-                0 => { x += time as i64; '>'},
-                1 => { y += time as i64; 'v'},
-                2 => { x -= time as i64; '<'},
-                3 => { y -= time as i64; '^'},
+                0 => { x += stamp.time as i64; '>'},
+                1 => { y += stamp.time as i64; 'v'},
+                2 => { x -= stamp.time as i64; '<'},
+                3 => { y -= stamp.time as i64; '^'},
                 _ => {'.'}
             };
             let x = (x.rem_euclid(map_size.0 as i64 - 2) + 1) as u8;
             let y = (y.rem_euclid(map_size.1 as i64 - 2) + 1) as u8;
-            assert!(x > 0 && y > 0 && x < map_size.0 - 1 && y < map_size.1 - 1);
-            if x == pos.0 && y == pos.1
+            //assert!(x > 0 && y > 0 && x < map_size.0 - 1 && y < map_size.1 - 1);
+            if x == stamp.x && y == stamp.y
             {
                 continue 'outer;
             }
@@ -95,23 +102,23 @@ fn simulate(start: (u8, u8), start_time: u32, blizzards: &Vec<Blizzard>, end: (u
         //new_map[pos.1 as usize][pos.0 as usize] = '@';
         //println!("Time: {}", time);
         //_print_map(&new_map);
-        if pos.0 > 0
+        if stamp.x > 0
         {
-            posses.push_back((pos.0 - 1, pos.1, time + 1));
+            posses.push_back(Stamp{time: stamp.time + 1, x: stamp.x - 1, y: stamp.y});
         }
-        if pos.1 > 0
+        if stamp.y > 0
         {
-            posses.push_back((pos.0, pos.1 - 1, time + 1));
+            posses.push_back(Stamp{time: stamp.time + 1, x: stamp.x, y: stamp.y - 1});
         }
-        if pos.0 < map_size.0
+        if stamp.x < map_size.0
         {
-            posses.push_back((pos.0 + 1, pos.1, time + 1));
+            posses.push_back(Stamp{time: stamp.time + 1, x: stamp.x + 1, y: stamp.y});
         }
-        if pos.1 < map_size.1
+        if stamp.y < map_size.1
         {
-            posses.push_back((pos.0, pos.1 + 1, time + 1));
+            posses.push_back(Stamp{time: stamp.time + 1, x: stamp.x, y: stamp.y + 1});
         }
-        posses.push_back((pos.0, pos.1, time + 1));
+        posses.push_back(Stamp{time: stamp.time + 1, x: stamp.x, y: stamp.y});
     }
     return !0;
 }
@@ -179,8 +186,8 @@ fn part_b(content: &'static str) -> i64
     let (blizzards, start, end, map) = parse(content);
 
     let fastest = simulate(start,0, &blizzards, end, &map);
-    let fastest = simulate(end, fastest as u32, &blizzards, start, &map);
-    let fastest = simulate(start, fastest as u32, &blizzards, end, &map);
+    let fastest = simulate(end, fastest as u16, &blizzards, start, &map);
+    let fastest = simulate(start, fastest as u16, &blizzards, end, &map);
     return fastest as i64;
 }
 

@@ -19,7 +19,7 @@ fn main()
     println!("Day {} duration: {}us", DAY_STR, now.elapsed().as_micros() as f32 / RUN_AMOUNT as f32);
 }
 
-pub struct Blizzard
+struct Blizzard
 {
     up: Vec<u128>,
     down: Vec<u128>,
@@ -41,32 +41,23 @@ fn _print_map(map: &Vec<u128>)
     println!("");
 }
 
-#[derive(Copy, Clone, Eq, Hash, PartialEq)]
-pub struct Stamp
-{
-    x: i8,
-    y: i8
-}
-
-pub fn simulate_step(
+fn simulate_blizzard_step(
     blizzards: &mut Blizzard,
-    wall_map: &Vec<u128>,
-    map_size: (usize, usize)) -> Vec<u128>
+    map_size: (usize, usize))
 {
     let rows = map_size.1 - 1;
     let cols = map_size.0 - 1;
 
     for i in 0..rows
     {
-        let l = &mut blizzards.right[i];
-        *l <<= 1;
-        *l &= !3;
-        *l |= (*l >> (cols - 1)) & 2;
-        *l &= 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffff;
+        let r = &mut blizzards.right[i];
+        *r <<= 1;
+        *r &= !3;
+        *r |= (*r >> (cols - 1)) & 2;
 
-        let r = &mut blizzards.left[i];
-        *r >>= 1;
-        *r |= (*r & 1) << (cols - 1);
+        let l = &mut blizzards.left[i];
+        *l >>= 1;
+        *l |= (*l & 1) << (cols - 1);
 
         blizzards.up[i] = blizzards.up[i + 1];
 
@@ -75,20 +66,9 @@ pub fn simulate_step(
 
     blizzards.down[1] = blizzards.down[rows];
     blizzards.up[rows - 1] = blizzards.up[0];
-
-    let mut new_map: Vec<u128> = wall_map.clone();
-
-    for i in 0..wall_map.len()
-    {
-        new_map[i] |= blizzards.left[i];
-        new_map[i] |= blizzards.right[i];
-        new_map[i] |= blizzards.up[i];
-        new_map[i] |= blizzards.down[i];
-    }
-    return new_map;
 }
 
-pub fn simulate(
+fn simulate(
     start: (usize, usize),
     end: (usize, usize),
     map_size: (usize, usize),
@@ -104,23 +84,28 @@ pub fn simulate(
 
     while ((posses[end.1] >> end.0) & 1) == 0
     {
-        let new_map = simulate_step(blizzards, wall_map, map_size);
-        let mut new_posses = posses.clone();
+        simulate_blizzard_step(blizzards, map_size);
 
-        for i in 0..wall_map.len() - 1
+        let mut prev = 0;
+        for i in 0..wall_map.len()
         {
-            new_posses[i + 0] |= posses[i + 1];
-            new_posses[i + 1] |= posses[i + 0];
-            new_posses[i + 0] |= posses[i + 0] << 1;
-            new_posses[i + 0] |= posses[i + 0] >> 1;
-        }
-        for i in 0..wall_map.len() - 1
-        {
-            new_posses[i] &= !new_map[i];
+            let curr = posses[i];
+            let next = if i < wall_map.len() - 1 { posses[i + 1] } else { 0 };
+
+            let mut blocks = wall_map[i];
+            blocks |= blizzards.up[i];
+            blocks |= blizzards.down[i];
+            blocks |= blizzards.left[i];
+            blocks |= blizzards.right[i];
+
+            posses[i] = prev | curr | next;
+            posses[i] |= curr << 1 | curr >> 1;
+
+            posses[i] &= !blocks;
+            prev = curr;
         }
         //println!("Time: {}", time);
         //_print_map(&new_map);
-        posses = new_posses;
         time += 1;
     }
     return time;

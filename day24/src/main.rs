@@ -21,18 +21,19 @@ fn main()
 
 pub struct Blizzard
 {
-    x: i8,
-    y: i8,
-    dir: u8,
-    _padding: u8
+    up: Vec<u128>,
+    down: Vec<u128>,
+    left: Vec<u128>,
+    right: Vec<u128>
 }
 
-fn _print_map(map: &Vec<Vec<char>>)
+fn _print_map(map: &Vec<u128>)
 {
     for l in map
     {
-        for c in l
+        for i in 0..128
         {
+            let c = if ((l >> i) & 1) == 1 {'#'} else {'.'};
             print!("{}", c);
         }
         println!("");
@@ -66,33 +67,42 @@ pub fn try_add(stamp: &Stamp, map: &mut Vec<u128>, posses: &mut Vec<Stamp>, map_
 }
 
 pub fn simulate_step(
-    blizzards: &Vec<Blizzard>,
+    blizzards: &mut Blizzard,
     map: &Vec<u128>,
     new_map: &mut Vec<u128>,
     map_size: (i8, i8),
-    time: u16)
+    _time: u16)
 {
+    let rows = (map_size.1 - 1) as usize;
+    let cols = (map_size.0 - 1) as usize;
+
+    for i in 0..rows
+    {
+        let l = &mut blizzards.right[i];
+        *l <<= 1;
+        *l &= !3;
+        *l |= (*l >> (map_size.0 - 2)) & 2;
+        *l &= 0x7fff_ffff_ffff_ffff_ffff_ffff_ffff_ffff;
+
+        let r = &mut blizzards.left[i];
+        *r >>= 1;
+        *r |= (*r & 1) << (cols - 1);
+
+        blizzards.up[i] = blizzards.up[i + 1];
+
+        blizzards.down[rows - i] = blizzards.down[rows - i - 1];
+    }
+
+    blizzards.down[1] = blizzards.down[rows];
+    blizzards.up[rows - 1] = blizzards.up[0];
+
     for i in 0..map.len()
     {
         new_map[i] = map[i];
-    }
-
-    for b in blizzards
-    {
-        let mut x = b.x as i64;
-        let mut y = b.y as i64;
-        let _c = match b.dir
-        {
-            0 => { x += time as i64; '>'},
-            1 => { y += time as i64; 'v'},
-            2 => { x -= time as i64; '<'},
-            3 => { y -= time as i64; '^'},
-            _ => { assert!(false); '.'}
-        };
-        let x = (x.rem_euclid(map_size.0 as i64 - 2) + 1) as usize;
-        let y = (y.rem_euclid(map_size.1 as i64 - 2) + 1) as usize;
-        //assert!(x > 0 && y > 0 && x < map_size.0 - 1 && y < map_size.1 - 1);
-        new_map[y] |= 1 << x;
+        new_map[i] |= blizzards.left[i];
+        new_map[i] |= blizzards.right[i];
+        new_map[i] |= blizzards.up[i];
+        new_map[i] |= blizzards.down[i];
     }
 }
 
@@ -101,7 +111,7 @@ pub fn simulate(
     end: (i8, i8),
     map_size: (i8, i8),
     start_time: u16,
-    blizzards: &Vec<Blizzard>,
+    blizzards: &mut Blizzard,
     map: &Vec<u128>) -> u16
 {
     let mut posses: Vec<Stamp> = Vec::new();
@@ -136,17 +146,15 @@ pub fn simulate(
             try_add(&Stamp{x: stamp.x + 0, y: stamp.y + 1}, &mut new_map, &mut new_posses, map_size);
             try_add(&Stamp{x: stamp.x + 0, y: stamp.y - 1}, &mut new_map, &mut new_posses, map_size);
         }
-        //_print_map(&new_map_tmp);
-        seen.clear();
         std::mem::swap(&mut posses, &mut new_posses);
         time += 1;
     }
     return !0;
 }
 
-fn parse(content: &'static str) -> (Vec<Blizzard>, (i8, i8), (i8, i8), (i8, i8), Vec<u128>)
+fn parse(content: &'static str) -> (Blizzard, (i8, i8), (i8, i8), (i8, i8), Vec<u128>)
 {
-    let mut blizzards: Vec<Blizzard> = Vec::new();
+    let mut blizzards: Blizzard = Blizzard{ up: Vec::new(), down: Vec::new(), left: Vec::new(), right: Vec::new() };
     let lines = content.lines().collect::<Vec<&str>>();
     let start = lines[0].find('.').unwrap();
     let end = lines[lines.len() - 1].find('.').unwrap();
@@ -155,18 +163,26 @@ fn parse(content: &'static str) -> (Vec<Blizzard>, (i8, i8), (i8, i8), (i8, i8),
     for row in 0..lines.len() as i8
     {
         let mut line = 0u128;
+        let mut right = 0u128;
+        let mut left = 0u128;
+        let mut up = 0u128;
+        let mut down = 0u128;
         for (col, &c) in lines[row as usize].as_bytes().iter().enumerate()
         {
             match c as char
             {
-                '>' => { blizzards.push(Blizzard {x: col as i8 - 1, y: row - 1, dir: 0, _padding: 0} )},
-                'v' => { blizzards.push(Blizzard {x: col as i8 - 1, y: row - 1, dir: 1, _padding: 0} )},
-                '<' => { blizzards.push(Blizzard {x: col as i8 - 1, y: row - 1, dir: 2, _padding: 0} )},
-                '^' => { blizzards.push(Blizzard {x: col as i8 - 1, y: row - 1, dir: 3, _padding: 0} )},
+                '>' => right |= 1 << col,
+                'v' => down |= 1 << col,
+                '<' => left |= 1 << col,
+                '^' => up |= 1 << col,
                 '#' => { line |= 1 << col },
                 _ => {}
             }
         }
+        blizzards.up.push(up);
+        blizzards.down.push(down);
+        blizzards.left.push(left);
+        blizzards.right.push(right);
         map.push(line);
     }
     let map_size = (lines[0].len() as i8, lines.len() as i8);
@@ -184,14 +200,14 @@ fn part_a_test()
 
 fn part_a(content: &'static str) -> i64
 {
-    let (blizzards, start, end, map_size, map) = parse(content);
+    let (mut blizzards, start, end, map_size, map) = parse(content);
 
     let fastest = simulate(
         start,
         end,
         map_size,
         0,
-        &blizzards,
+        &mut blizzards,
         &map);
     return fastest as i64;
 }
@@ -205,11 +221,11 @@ fn part_b_test()
 
 fn part_b(content: &'static str) -> i64
 {
-    let (blizzards, start, end, map_size, map) = parse(content);
+    let (mut blizzards, start, end, map_size, map) = parse(content);
 
-    let fastest = simulate(start, end, map_size, 0, &blizzards, &map);
-    let fastest = simulate(end, start, map_size, fastest, &blizzards, &map);
-    let fastest = simulate(start, end, map_size, fastest, &blizzards, &map);
+    let fastest = simulate(start, end, map_size, 0, &mut blizzards, &map);
+    let fastest = simulate(end, start, map_size, fastest + 1, &mut blizzards, &map);
+    let fastest = simulate(start, end, map_size, fastest + 1, &mut blizzards, &map);
     return fastest as i64;
 }
 

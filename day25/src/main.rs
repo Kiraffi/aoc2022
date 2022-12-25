@@ -14,53 +14,66 @@ fn main()
         _ = part_b(&_data);
     }
     */
-    println!("Day {}-1: CHANGE THIS: {}", DAY_STR, part_a(&DATA));
-    println!("Day {}-2: CHANGE THIS: {}", DAY_STR, part_b(&DATA));
+    println!("Day {}-1: Snafu number: {}", DAY_STR, part_a(&DATA));
     println!("Day {} duration: {}us", DAY_STR, now.elapsed().as_micros() as f32 / RUN_AMOUNT as f32);
 }
 
-#[derive(Clone)]
-struct Point
+fn pow5(a: i64) -> i64
 {
-    x: i64,
-    y: i64
+    return (0..a).fold(1, |p, _|{ p * 5 });
 }
 
-impl Point
+fn to_snafu_number(mut a: i64) -> String
 {
-    fn min(a: &Point, b: &Point) -> Point
+    let mut s = String::new();
+
+    a -= 1;
+    while a > 0
     {
-        Point{x: std::cmp::min(a.x, b.x), y: std::cmp::min(a.y, b.y)}
+        let c = match a % 5
+        {
+            0 => '1',
+            1 => '2',
+            2 => '=',
+            3 => '-',
+            4 => '0',
+            _ => unreachable!()
+        };
+        s.insert(0, c);
+        a -= 2;
+        a /= 5;
     }
-    fn max(a: &Point, b: &Point) -> Point
-    {
-        Point{x: std::cmp::max(a.x, b.x), y: std::cmp::max(a.y, b.y)}
-    }
+    return s;
 }
 
 #[test]
 fn part_a_test()
 {
     let value = part_a(&_TEST_DATA);
-    assert_eq!(value, 0);
+    assert_eq!(value, "2=-1=0");
 }
 
-fn part_a(content: &'static str) -> i64
+fn part_a(content: &'static str) -> String
 {
-    return 0;
+    let mut sum = 0;
+    for line in content.lines()
+    {
+        let bytes = line.as_bytes();
+        for i in 0..bytes.len()
+        {
+            let num = match bytes[bytes.len() - 1 - i] as char
+            {
+                '2' => 2,
+                '1' => 1,
+                '0' => 0,
+                '-' => -1,
+                '=' => -2,
+                _ => 0
+            };
+            sum += pow5(i as i64) * num;
+        }
+    }
+
+    return to_snafu_number(sum);
 }
-
-#[test]
-fn part_b_test()
-{
-    let value = part_b(&_TEST_DATA);
-    assert_eq!(value, 0);
-}
-
-fn part_b(content: &'static str) -> i64
-{
-    return 0;
-}
-
-
 
